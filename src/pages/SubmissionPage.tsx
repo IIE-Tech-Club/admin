@@ -1,167 +1,137 @@
-type PipelineColumn = {
-  title: string
-  count: number
-  tone: 'cyan' | 'amber' | 'emerald'
-  items: string[]
-}
+import { useEffect, useState } from 'react'
+import { useParams, Link } from '@tanstack/react-router'
+import Loader from '../components/ui/Loader'
 
 type SubmissionItem = {
   id: string
+  regId: string
   team: string
   project: string
   submittedAt: string
   scoreRisk: string
+  link: string
 }
-
-const pipeline: PipelineColumn[] = [
-  {
-    title: 'Pending Screening',
-    count: 13,
-    tone: 'amber',
-    items: ['ByteBandits', 'NeonLoop', 'StreamForge'],
-  },
-  {
-    title: 'Under Judging',
-    count: 9,
-    tone: 'cyan',
-    items: ['OrbitOps', 'StackMinds', 'NovaThread'],
-  },
-  {
-    title: 'Finalized',
-    count: 22,
-    tone: 'emerald',
-    items: ['CodeNinjas', 'PulseLab', 'GraphRiders'],
-  },
-]
-
-const toneClass: Record<PipelineColumn['tone'], string> = {
-  amber: 'border-amber-300/35 bg-amber-500/10 text-amber-200',
-  cyan: 'border-cyan-300/35 bg-cyan-500/10 text-cyan-200',
-  emerald: 'border-emerald-300/35 bg-emerald-500/10 text-emerald-200',
-}
-
-const submissions: SubmissionItem[] = [
-  {
-    id: 'SUB-9081',
-    team: 'OrbitOps',
-    project: 'PulseBoard',
-    submittedAt: '10:41 AM',
-    scoreRisk: 'Low Risk',
-  },
-  {
-    id: 'SUB-9082',
-    team: 'StackMinds',
-    project: 'RuralPay',
-    submittedAt: '10:35 AM',
-    scoreRisk: 'Medium Risk',
-  },
-  {
-    id: 'SUB-9083',
-    team: 'NovaThread',
-    project: 'MediMesh',
-    submittedAt: '10:28 AM',
-    scoreRisk: 'Low Risk',
-  },
-  {
-    id: 'SUB-9084',
-    team: 'CodeNinjas',
-    project: 'GreenGrid',
-    submittedAt: '10:11 AM',
-    scoreRisk: 'High Risk',
-  },
-]
 
 export function SubmissionPage() {
+  const { hackathonId } = useParams({ from: '/h/$hackathonId' })
+  const [submissions, setSubmissions] = useState<SubmissionItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`)
+        const registrations = await response.json()
+        
+        const filtered = registrations
+          .filter((reg: any) => {
+              return reg.responses && (reg.responses['phase_3_submissions'] || Object.keys(reg.responses).length > 0);
+          })
+          .map((reg: any) => {
+            const responses = reg.responses || {}
+            let team = 'N/A'
+            let project = 'Untitled'
+            let link = '#'
+
+            const submissionData = responses['phase_3_submissions']
+            const teamData = responses['phase_2_team_formation']
+            const registrationData = responses['phase_1_registration']
+
+            if (submissionData) {
+              project = submissionData.projectName
+              link = submissionData.repoLink || submissionData.demoLink || '#'
+            }
+
+            if (teamData) {
+              team = teamData.teamName
+            } else if (registrationData) {
+              team = registrationData.teamName || 'Individual'
+            }
+
+            if (project === 'Untitled') {
+                Object.values(responses).forEach((data: any) => {
+                    if (typeof data === 'object' && data !== null) {
+                        if (data.title || data.projectName) project = data.title || data.projectName
+                        if (data.driveLink || data.link || data.url) link = data.driveLink || data.link || data.url
+                    }
+                })
+            }
+
+            return {
+              id: reg._id.substring(reg._id.length - 8).toUpperCase(),
+              regId: reg._id,
+              team,
+              project,
+              submittedAt: new Date(reg.registrationDate).toLocaleDateString(),
+              scoreRisk: reg.status === 'Approved' ? 'Low Risk' : 'Medium Risk',
+              link
+            }
+          })
+
+        setSubmissions(filtered)
+      } catch (error) {
+        console.error('Failed to fetch submissions:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchSubmissions()
+  }, [hackathonId])
+
   return (
-    <section className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-semibold text-slate-50 md:text-4xl">
-          Submission
+    <section className="space-y-8">
+      <header className="glass-card p-8 border-cyan-500/20">
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 font-orbitron mb-2">
+          Submission Protocol
+        </p>
+        <h1 className="text-4xl font-black text-white md:text-5xl tracking-tight font-orbitron">
+          Submission <span className="text-cyan-400 text-glow">Archive</span>
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Coordinate judging flow and review final project packages.
+        <p className="mt-4 text-sm text-slate-400 font-medium tracking-wide">
+          Access and manage project artifacts submitted by participants during the final phase.
         </p>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {pipeline.map((column) => (
-          <article key={column.title} className="panel p-5">
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="text-xl font-semibold text-white">{column.title}</h2>
-              <span
-                className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${toneClass[column.tone]}`}
-              >
-                {column.count}
-              </span>
-            </div>
+      <article className="glass-card p-8 border-cyan-500/10">
+        <div className="mb-8 flex items-center gap-4 border-b border-cyan-500/10 pb-6">
+          <div className="h-8 w-1 bg-cyan-400 shadow-[0_0_15px_#00ffff]" />
+          <h2 className="text-2xl font-black text-white tracking-widest font-orbitron">Packet Stream</h2>
+        </div>
 
-            <div className="mt-4 space-y-2">
-              {column.items.map((item) => (
-                <p
-                  key={item}
-                  className="rounded-lg border border-slate-800/80 bg-slate-950/60 px-3 py-2 text-sm text-slate-300"
-                >
-                  {item}
-                </p>
-              ))}
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <article className="panel p-5">
-        <h2 className="mb-4 text-2xl font-semibold text-white">Latest Submissions</h2>
         <div className="soft-scrollbar overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left text-sm">
+          <table className="w-full min-w-[400px] border-collapse">
             <thead>
-              <tr>
-                <th className="border-b border-slate-800 px-3 py-3 font-semibold uppercase tracking-[0.1em] text-slate-500">
-                  Submission ID
-                </th>
-                <th className="border-b border-slate-800 px-3 py-3 font-semibold uppercase tracking-[0.1em] text-slate-500">
-                  Team
-                </th>
-                <th className="border-b border-slate-800 px-3 py-3 font-semibold uppercase tracking-[0.1em] text-slate-500">
-                  Project
-                </th>
-                <th className="border-b border-slate-800 px-3 py-3 font-semibold uppercase tracking-[0.1em] text-slate-500">
-                  Submitted At
-                </th>
-                <th className="border-b border-slate-800 px-3 py-3 font-semibold uppercase tracking-[0.1em] text-slate-500">
-                  Risk Signal
-                </th>
+              <tr className="text-left border-b border-white/5">
+                <th className="pb-4 px-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Packet UID</th>
+                <th className="pb-4 px-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Deployment</th>
               </tr>
             </thead>
-            <tbody>
-              {submissions.map((item) => (
-                <tr key={item.id}>
-                  <td className="border-b border-slate-800/70 px-3 py-3 font-semibold text-cyan-200">
-                    {item.id}
-                  </td>
-                  <td className="border-b border-slate-800/70 px-3 py-3 text-slate-200">
-                    {item.team}
-                  </td>
-                  <td className="border-b border-slate-800/70 px-3 py-3 text-slate-300">
-                    {item.project}
-                  </td>
-                  <td className="border-b border-slate-800/70 px-3 py-3 text-slate-300">
-                    {item.submittedAt}
-                  </td>
-                  <td className="border-b border-slate-800/70 px-3 py-3">
-                    <span
-                      className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                        item.scoreRisk === 'Low Risk'
-                          ? 'border-emerald-300/35 bg-emerald-500/15 text-emerald-200'
-                          : item.scoreRisk === 'Medium Risk'
-                            ? 'border-amber-300/35 bg-amber-500/15 text-amber-200'
-                            : 'border-rose-300/35 bg-rose-500/15 text-rose-200'
-                      }`}
-                    >
-                      {item.scoreRisk}
-                    </span>
+            <tbody className="divide-y divide-white/5">
+              {loading ? (
+                <tr>
+                  <td colSpan={2} className="py-10">
+                    <Loader text="Scanning neural links..." />
                   </td>
                 </tr>
-              ))}
+              ) : submissions.length === 0 ? (
+                <tr>
+                  <td colSpan={2} className="py-10 text-center text-xs text-slate-600 uppercase tracking-widest font-orbitron">
+                    No packets detected in stream
+                  </td>
+                </tr>
+              ) : (
+                submissions.map((item) => (
+                  <tr key={item.regId} className="group hover:bg-cyan-500/[0.02] transition-colors relative">
+                    <td className="py-5 px-4 text-[10px] font-bold text-cyan-400 font-orbitron tracking-widest">
+                      {item.id}
+                      <Link to="/h/$hackathonId/submission/$registrationId" params={{ hackathonId, registrationId: item.regId }} className="absolute inset-0 z-10" />
+                    </td>
+                    <td className="py-5 px-4">
+                      <p className="text-xs font-black text-white uppercase tracking-widest font-orbitron">{item.team}</p>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

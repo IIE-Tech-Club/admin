@@ -1,73 +1,69 @@
-# React + TypeScript + Vite
+# 🛠️ CodeCraft Admin Portal
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The administrative command center for CodeCraft. A high-performance, reactive dashboard built with Vite, React, and TanStack Router, designed for real-time hackathon management and participant oversight.
 
-Currently, two official plugins are available:
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TanStack Router](https://img.shields.io/badge/TanStack%20Router-FF4154?style=for-the-badge&logo=tanstack&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 📂 Project Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Path | Description |
+| :--- | :--- |
+| `src/main.tsx` | Application entry point. |
+| `src/router.tsx` | Centralized route definitions using TanStack Router. |
+| `src/pages/` | High-level page components (Dashboard, Registrations, etc.). |
+| `src/components/` | Reusable UI components and layouts. |
+| `src/lib/` | Utility functions and service initializations (Firebase). |
+| `src/assets/` | Static assets and styling tokens. |
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠️ Way of Working (Logic Flow)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```mermaid
+graph TD
+    A[User Entry] --> B{Auth Check}
+    B -- No --> C[Login Page]
+    B -- Yes --> D[Select Hackathon]
+    D --> E[Admin Layout]
+    E --> F[Dashboard: Metrics]
+    E --> G[Registrations: Management]
+    E --> H[Phases: Architect]
+    E --> I[Organizers: Config]
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## ⚡ Quick Start
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. **Install Dependencies**
+
+   ```bash
+   npm install
+   ```
+
+2. **Run Development Server**
+
+   ```bash
+   npm run dev
+   ```
+
+3. **Build for Production**
+
+   ```bash
+   npm run build
+   ```
+
+---
+
+## 🔑 Key Features
+
+- **Phase Architect**: Customize hackathon phases dynamically.
+- **Real-time Metrics**: Track registrations and submissions via Firebase.
+- **Team Management**: Oversee participant groupings and details.
+- **Asset Handling**: Integrated image cropping and Cloudinary uploads.

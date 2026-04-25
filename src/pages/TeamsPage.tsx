@@ -1,3 +1,7 @@
+import { useEffect, useState } from 'react'
+import { useParams, Link } from '@tanstack/react-router'
+import Loader from '../components/ui/Loader'
+
 type TeamStatus = 'Building' | 'Review' | 'Blocked'
 
 type Team = {
@@ -9,181 +13,144 @@ type Team = {
   status: TeamStatus
 }
 
-type LeaderboardRow = {
-  rank: number
-  team: string
-  score: number
-  demos: number
-  mentors: string
-}
-
-const teams: Team[] = [
-  {
-    name: 'OrbitOps',
-    members: 5,
-    track: 'Productivity',
-    progress: 86,
-    velocity: 9,
-    status: 'Review',
-  },
-  {
-    name: 'NovaThread',
-    members: 4,
-    track: 'HealthTech',
-    progress: 64,
-    velocity: 7,
-    status: 'Building',
-  },
-  {
-    name: 'CodeNinjas',
-    members: 6,
-    track: 'Climate',
-    progress: 48,
-    velocity: 5,
-    status: 'Blocked',
-  },
-  {
-    name: 'StackMinds',
-    members: 5,
-    track: 'FinTech',
-    progress: 73,
-    velocity: 8,
-    status: 'Building',
-  },
-]
-
-const statusClasses: Record<TeamStatus, string> = {
-  Building: 'border-cyan-300/35 bg-cyan-500/15 text-cyan-200',
-  Review: 'border-emerald-300/35 bg-emerald-500/15 text-emerald-200',
-  Blocked: 'border-rose-300/35 bg-rose-500/15 text-rose-200',
-}
-
-const leaderboard: LeaderboardRow[] = [
-  {
-    rank: 1,
-    team: 'OrbitOps',
-    score: 91,
-    demos: 3,
-    mentors: 'Nadia, Rafi',
-  },
-  {
-    rank: 2,
-    team: 'StackMinds',
-    score: 88,
-    demos: 2,
-    mentors: 'Imran, Koyal',
-  },
-  {
-    rank: 3,
-    team: 'NovaThread',
-    score: 83,
-    demos: 2,
-    mentors: 'Isha, Suman',
-  },
-  {
-    rank: 4,
-    team: 'CodeNinjas',
-    score: 79,
-    demos: 1,
-    mentors: 'Sadia, Arif',
-  },
-]
-
 export function TeamsPage() {
+  const { hackathonId } = useParams({ from: '/h/$hackathonId' })
+  const [teams, setTeams] = useState<Team[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const [hackathonData, setHackathonData] = useState<any>(null)
+
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const hRes = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`)
+        const hackathon = await hRes.json()
+        setHackathonData(hackathon)
+
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`)
+        const registrations = await response.json()
+        
+        const teamMap = new Map<string, Team>()
+        
+        registrations.forEach((reg: any) => {
+          const responses = reg.responses || {}
+          let teamName = ''
+          let membersCount = 1
+          let track = 'General'
+          
+          const teamFormationData = responses['phase_2_team_formation']
+          const registrationData = responses['phase_1_registration']
+
+          if (teamFormationData) {
+            teamName = teamFormationData.teamName
+            membersCount = parseInt(teamFormationData.teamSize) || 1
+            track = teamFormationData.role 
+          } else if (registrationData) {
+            teamName = registrationData.teamName
+            track = registrationData.branch || 'General'
+          }
+          
+          if (!teamName) {
+            Object.values(responses).forEach((data: any) => {
+                if (typeof data === 'object' && data !== null && data.teamName) {
+                    teamName = data.teamName
+                }
+            })
+          }
+
+          if (teamName) {
+            const existing = teamMap.get(teamName)
+            if (existing) {
+              if (teamFormationData) {
+                  existing.members = membersCount
+                  existing.track = track
+              }
+            } else {
+              teamMap.set(teamName, {
+                name: teamName,
+                members: membersCount,
+                track: track,
+                progress: 0,
+                velocity: 0,
+                status: 'Building'
+              })
+            }
+          }
+        })
+
+        setTeams(Array.from(teamMap.values()))
+      } catch (error) {
+        console.error('Failed to fetch teams:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchTeams()
+  }, [hackathonId])
+
   return (
-    <section className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-semibold text-slate-50 md:text-4xl">Teams</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Track squad velocity, submission progress, and mentor feedback loops.
+    <section className="space-y-8">
+      <header className="glass-card p-8 border-cyan-500/20">
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 font-orbitron mb-2">
+          Tactical Units
+        </p>
+        <h1 className="text-4xl font-black text-white md:text-5xl tracking-tight font-orbitron">
+          Team <span className="text-cyan-400 text-glow">Roster</span>
+          {hackathonData && (
+            <span className="block text-sm text-slate-500 mt-2 font-mono tracking-widest opacity-60 uppercase">
+              NODE: {hackathonData.title}
+            </span>
+          )}
+        </h1>
+        <p className="mt-4 text-sm text-slate-400 font-medium tracking-wide">
+          Manage and review the active tactical units deployed across the arena.
         </p>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-        {teams.map((team) => (
-          <article key={team.name} className="panel p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold text-white">{team.name}</h2>
-                <p className="text-sm text-slate-400">{team.track}</p>
-              </div>
-              <span
-                className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusClasses[team.status]}`}
-              >
-                {team.status}
-              </span>
-            </div>
+      <article className="glass-card p-8 border-cyan-500/10">
+        <div className="mb-8 flex items-center gap-4 border-b border-cyan-500/10 pb-6">
+          <div className="h-8 w-1 bg-cyan-400 shadow-[0_0_15px_#00ffff]" />
+          <h2 className="text-2xl font-black text-white tracking-widest font-orbitron">Active Squads</h2>
+        </div>
 
-            <div className="mt-4 space-y-3 text-sm">
-              <div className="flex items-center justify-between rounded-lg bg-slate-950/65 px-3 py-2 text-slate-300">
-                <span>Members</span>
-                <span className="font-semibold text-white">{team.members}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg bg-slate-950/65 px-3 py-2 text-slate-300">
-                <span>Velocity</span>
-                <span className="font-semibold text-white">{team.velocity}/10</span>
-              </div>
-
-              <div>
-                <div className="mb-1.5 flex items-center justify-between text-slate-300">
-                  <span>Submission Progress</span>
-                  <span>{team.progress}%</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-slate-800">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-300"
-                    style={{ width: `${team.progress}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <article className="panel p-5">
-        <h2 className="mb-4 text-2xl font-semibold text-white">Leaderboard Snapshot</h2>
         <div className="soft-scrollbar overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <table className="w-full min-w-[400px] border-collapse">
             <thead>
-              <tr>
-                <th className="border-b border-slate-800 px-3 py-3 font-semibold uppercase tracking-[0.1em] text-slate-500">
-                  Rank
-                </th>
-                <th className="border-b border-slate-800 px-3 py-3 font-semibold uppercase tracking-[0.1em] text-slate-500">
-                  Team
-                </th>
-                <th className="border-b border-slate-800 px-3 py-3 font-semibold uppercase tracking-[0.1em] text-slate-500">
-                  Score
-                </th>
-                <th className="border-b border-slate-800 px-3 py-3 font-semibold uppercase tracking-[0.1em] text-slate-500">
-                  Demos
-                </th>
-                <th className="border-b border-slate-800 px-3 py-3 font-semibold uppercase tracking-[0.1em] text-slate-500">
-                  Mentors
-                </th>
+              <tr className="text-left border-b border-white/5">
+                <th className="pb-4 px-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Squad Name</th>
+                <th className="pb-4 px-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Track / Role</th>
+                <th className="pb-4 px-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Strength</th>
               </tr>
             </thead>
-            <tbody>
-              {leaderboard.map((row) => (
-                <tr key={row.rank}>
-                  <td className="border-b border-slate-800/70 px-3 py-3 font-semibold text-cyan-200">
-                    #{row.rank}
-                  </td>
-                  <td className="border-b border-slate-800/70 px-3 py-3 text-slate-200">
-                    {row.team}
-                  </td>
-                  <td className="border-b border-slate-800/70 px-3 py-3 text-slate-300">
-                    {row.score}
-                  </td>
-                  <td className="border-b border-slate-800/70 px-3 py-3 text-slate-300">
-                    {row.demos}
-                  </td>
-                  <td className="border-b border-slate-800/70 px-3 py-3 text-slate-300">
-                    {row.mentors}
+            <tbody className="divide-y divide-white/5">
+              {loading ? (
+                <tr>
+                  <td colSpan={3} className="py-10">
+                    <Loader text="Syncing tactical units..." />
                   </td>
                 </tr>
-              ))}
+              ) : teams.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="py-10 text-center text-xs text-slate-600 uppercase tracking-widest font-orbitron">
+                    No squads detected in arena
+                  </td>
+                </tr>
+              ) : (
+                teams.map((team) => (
+                  <tr key={team.name} className="group hover:bg-cyan-500/[0.02] transition-colors relative">
+                    <td className="py-5 px-4 text-[10px] font-bold text-cyan-400 font-orbitron tracking-widest">
+                      {team.name}
+                      <Link to="/h/$hackathonId/teams/$teamName" params={{ hackathonId, teamName: team.name }} className="absolute inset-0 z-10" />
+                    </td>
+                    <td className="py-5 px-4">
+                      <p className="text-xs font-black text-white uppercase tracking-widest font-orbitron">{team.track}</p>
+                    </td>
+                    <td className="py-5 px-4">
+                      <span className="text-xs font-black text-white font-orbitron">{team.members} UNITS</span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

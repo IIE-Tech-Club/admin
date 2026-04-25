@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider } from '@tanstack/react-router'
 import './index.css'
 import { router } from './router'
+import CustomCursor from './components/CustomCursor'
 
 const rootElement = document.getElementById('root')
 
@@ -12,6 +13,7 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
+    <CustomCursor />
     <RouterProvider router={router} />
   </StrictMode>,
 )
