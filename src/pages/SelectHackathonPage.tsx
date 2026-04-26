@@ -315,10 +315,10 @@ export function SelectHackathonPage() {
                   {/* Banner Image / Background */}
                   <div className="h-32 relative overflow-hidden bg-slate-900 border-b border-white/10">
                     {h.banner ? (
-                      h.banner.startsWith('linear-gradient') ? (
+                      h.banner.trim().toLowerCase().startsWith('linear-gradient') ? (
                         <div 
                           className="w-full h-full opacity-60 group-hover:opacity-40 transition-all duration-700 group-hover:scale-110"
-                          style={{ backgroundImage: h.banner }}
+                          style={{ backgroundImage: h.banner.trim() }}
                         />
                       ) : (
                         <img

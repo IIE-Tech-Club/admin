@@ -284,10 +284,10 @@ export function HackathonSettingsPage() {
             <div className="h-40 w-full bg-slate-900 border border-white/10 overflow-hidden flex items-center justify-center relative">
               {settings.banner ? (
                 <>
-                  {settings.banner.startsWith('linear-gradient') ? (
+                  {settings.banner.trim().toLowerCase().startsWith('linear-gradient') ? (
                     <div 
                       className="w-full h-full opacity-60 group-hover:opacity-40 transition-opacity"
-                      style={{ backgroundImage: settings.banner }}
+                      style={{ backgroundImage: settings.banner.trim() }}
                     />
                   ) : (
                     <img 
