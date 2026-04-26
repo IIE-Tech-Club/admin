@@ -67,6 +67,13 @@ export function DashboardPage() {
 
         setHackathon(hData)
         
+        // Safety check: Ensure registrations data is an array
+        if (!Array.isArray(rData)) {
+            console.error("Expected array for registrations, got:", rData);
+            setRegistrations([]);
+            return;
+        }
+
         const formatted: BackendUser[] = rData.map((reg: any) => {
             const responses = reg.responses || {}
             let name = reg.user?.name || 'Unknown'

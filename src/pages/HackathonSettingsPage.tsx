@@ -284,11 +284,18 @@ export function HackathonSettingsPage() {
             <div className="h-40 w-full bg-slate-900 border border-white/10 overflow-hidden flex items-center justify-center relative">
               {settings.banner ? (
                 <>
-                  <img 
-                    src={settings.banner} 
-                    alt="Banner Preview" 
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity"
-                  />
+                  {settings.banner.startsWith('linear-gradient') ? (
+                    <div 
+                      className="w-full h-full opacity-60 group-hover:opacity-40 transition-opacity"
+                      style={{ backgroundImage: settings.banner }}
+                    />
+                  ) : (
+                    <img 
+                      src={settings.banner} 
+                      alt="Banner Preview" 
+                      className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity"
+                    />
+                  )}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <p className="text-[10px] font-orbitron text-white uppercase tracking-widest bg-black/60 px-4 py-2 border border-white/20">Click to Replace</p>
                   </div>

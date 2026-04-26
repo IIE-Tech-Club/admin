@@ -122,9 +122,16 @@ export function SelectHackathonPage() {
           `${import.meta.env.VITE_API_URL}/hackathons`,
         );
         const data = await response.json();
-        setHackathons(data);
+        // Safety check: Ensure data is an array before setting state
+        if (Array.isArray(data)) {
+          setHackathons(data);
+        } else {
+          console.error("Expected array from API, got:", data);
+          setHackathons([]);
+        }
       } catch (error) {
         console.error("Failed to fetch hackathons:", error);
+        setHackathons([]);
       } finally {
         setLoading(false);
       }
@@ -308,11 +315,18 @@ export function SelectHackathonPage() {
                   {/* Banner Image / Background */}
                   <div className="h-32 relative overflow-hidden bg-slate-900 border-b border-white/10">
                     {h.banner ? (
-                      <img
-                        src={h.banner}
-                        className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-all duration-700 group-hover:scale-110"
-                        alt=""
-                      />
+                      h.banner.startsWith('linear-gradient') ? (
+                        <div 
+                          className="w-full h-full opacity-60 group-hover:opacity-40 transition-all duration-700 group-hover:scale-110"
+                          style={{ backgroundImage: h.banner }}
+                        />
+                      ) : (
+                        <img
+                          src={h.banner}
+                          className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-all duration-700 group-hover:scale-110"
+                          alt=""
+                        />
+                      )
                     ) : (
                       <div className="absolute inset-0 bg-linear-to-br from-cyan-500/10 to-blue-500/10 opacity-30" />
                     )}
