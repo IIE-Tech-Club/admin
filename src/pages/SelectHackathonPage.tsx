@@ -216,7 +216,11 @@ export function SelectHackathonPage() {
                 fields: [
                   { id: "name", label: "Full Name", type: "text", required: true },
                   { id: "email", label: "Email Address", type: "email", required: true },
+                  { id: "phone", label: "Phone Number", type: "tel", required: true },
+                  { id: "year", label: "Current Year", type: "select", options: ["1st Year", "2nd Year", "3rd Year", "4th Year", "Other"], required: true },
                   { id: "branch", label: "Branch / Department", type: "text", required: true },
+                  { id: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other", "Prefer not to say"], required: true },
+                  { id: "collegeName", label: "College / University Name", type: "text", required: true },
                 ]
               },
               {

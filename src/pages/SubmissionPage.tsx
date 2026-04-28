@@ -12,6 +12,13 @@ type SubmissionItem = {
   link: string
 }
 
+interface RegistrationResponse {
+  _id: string
+  registrationDate: string
+  responses: Record<string, unknown>
+  status?: string
+}
+
 export function SubmissionPage() {
   const { hackathonId } = useParams({ from: '/h/$hackathonId' })
   const [submissions, setSubmissions] = useState<SubmissionItem[]>([])
@@ -23,52 +30,35 @@ export function SubmissionPage() {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`)
         const registrations = await response.json()
         
-        const filtered = registrations
-          .filter((reg: any) => {
-              return reg.responses && (reg.responses['phase_3_submissions'] || Object.keys(reg.responses).length > 0);
-          })
-          .map((reg: any) => {
-            const responses = reg.responses || {}
-            let team = 'N/A'
-            let project = 'Untitled'
-            let link = '#'
+        // Use a Map to group submissions by team name
+        const teamSubmissions = new Map<string, SubmissionItem>();
 
-            const submissionData = responses['phase_3_submissions']
-            const teamData = responses['phase_2_team_formation']
-            const registrationData = responses['phase_1_registration']
-
-            if (submissionData) {
-              project = submissionData.projectName
-              link = submissionData.repoLink || submissionData.demoLink || '#'
+        (registrations as RegistrationResponse[]).forEach((reg) => {
+          const responses = reg.responses || {}
+          const submissionData = responses['phase_3_submissions'] as Record<string, unknown> | undefined
+          
+          // Only proceed if there is actual submission data
+          if (submissionData) {
+            const teamData = responses['phase_2_team_formation'] as Record<string, unknown> | undefined
+            const regData = responses['phase_1_registration'] as Record<string, unknown> | undefined
+            const teamName = (teamData?.teamName as string) || (regData?.teamName as string) || 'Individual'
+            
+            // Only add if this team hasn't been added yet (or update if needed)
+            if (!teamSubmissions.has(teamName)) {
+              teamSubmissions.set(teamName, {
+                id: reg._id.substring(reg._id.length - 8).toUpperCase(),
+                regId: reg._id,
+                team: teamName,
+                project: (submissionData.projectName as string) || 'Untitled Project',
+                submittedAt: new Date(reg.registrationDate).toLocaleDateString(),
+                scoreRisk: reg.status === 'Approved' ? 'Low Risk' : 'Medium Risk',
+                link: (submissionData.repoLink as string) || (submissionData.demoLink as string) || '#'
+              })
             }
+          }
+        })
 
-            if (teamData) {
-              team = teamData.teamName
-            } else if (registrationData) {
-              team = registrationData.teamName || 'Individual'
-            }
-
-            if (project === 'Untitled') {
-                Object.values(responses).forEach((data: any) => {
-                    if (typeof data === 'object' && data !== null) {
-                        if (data.title || data.projectName) project = data.title || data.projectName
-                        if (data.driveLink || data.link || data.url) link = data.driveLink || data.link || data.url
-                    }
-                })
-            }
-
-            return {
-              id: reg._id.substring(reg._id.length - 8).toUpperCase(),
-              regId: reg._id,
-              team,
-              project,
-              submittedAt: new Date(reg.registrationDate).toLocaleDateString(),
-              scoreRisk: reg.status === 'Approved' ? 'Low Risk' : 'Medium Risk',
-              link
-            }
-          })
-
-        setSubmissions(filtered)
+        setSubmissions(Array.from(teamSubmissions.values()))
       } catch (error) {
         console.error('Failed to fetch submissions:', error)
       } finally {

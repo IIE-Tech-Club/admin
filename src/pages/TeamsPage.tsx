@@ -13,12 +13,22 @@ type Team = {
   status: TeamStatus
 }
 
+interface Hackathon {
+  _id: string
+  title: string
+}
+
+interface RegistrationResponse {
+  _id: string
+  responses: Record<string, unknown>
+}
+
 export function TeamsPage() {
   const { hackathonId } = useParams({ from: '/h/$hackathonId' })
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
 
-  const [hackathonData, setHackathonData] = useState<any>(null)
+  const [hackathonData, setHackathonData] = useState<Hackathon | null>(null)
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -30,30 +40,31 @@ export function TeamsPage() {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`)
         const registrations = await response.json()
         
-        const teamMap = new Map<string, Team>()
+        const teamMap = new Map<string, Team>();
         
-        registrations.forEach((reg: any) => {
+        (registrations as RegistrationResponse[]).forEach((reg) => {
           const responses = reg.responses || {}
           let teamName = ''
           let membersCount = 1
           let track = 'General'
           
-          const teamFormationData = responses['phase_2_team_formation']
-          const registrationData = responses['phase_1_registration']
+          const teamFormationData = responses['phase_2_team_formation'] as Record<string, unknown> | undefined
+          const registrationData = responses['phase_1_registration'] as Record<string, unknown> | undefined
 
           if (teamFormationData) {
-            teamName = teamFormationData.teamName
-            membersCount = parseInt(teamFormationData.teamSize) || 1
-            track = teamFormationData.role 
+            teamName = String(teamFormationData.teamName || '')
+            membersCount = parseInt(String(teamFormationData.teamSize || '1')) || 1
+            track = String(teamFormationData.role || 'General')
           } else if (registrationData) {
-            teamName = registrationData.teamName
-            track = registrationData.branch || 'General'
+            teamName = String(registrationData.teamName || '')
+            track = String(registrationData.branch || 'General')
           }
           
           if (!teamName) {
-            Object.values(responses).forEach((data: any) => {
-                if (typeof data === 'object' && data !== null && data.teamName) {
-                    teamName = data.teamName
+            Object.values(responses).forEach((data) => {
+                if (data && typeof data === 'object') {
+                    const d = data as Record<string, unknown>
+                    if (d.teamName) teamName = String(d.teamName)
                 }
             })
           }

@@ -2,10 +2,36 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from '@tanstack/react-router'
 import Loader from '../components/ui/Loader'
 
+interface PhaseField {
+  id: string
+  label: string
+  type: string
+}
+
+interface HackathonPhase {
+  id: string
+  fields: PhaseField[]
+}
+
+interface Hackathon {
+  _id: string
+  title: string
+  phases: HackathonPhase[]
+}
+
+interface Registration {
+  _id: string
+  registrationDate: string
+  user: {
+    email: string
+  }
+  responses: Record<string, unknown>
+}
+
 export function SubmissionDetailsPage() {
   const { hackathonId, registrationId } = useParams({ from: '/h/$hackathonId/submission/$registrationId' })
-  const [registration, setRegistration] = useState<any>(null)
-  const [hackathon, setHackathon] = useState<any>(null)
+  const [registration, setRegistration] = useState<Registration | null>(null)
+  const [hackathon, setHackathon] = useState<Hackathon | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -46,8 +72,10 @@ export function SubmissionDetailsPage() {
 
   const getTeamName = () => {
     let teamName = '';
-    Object.values(registration.responses || {}).forEach((data: any) => {
-        if (typeof data === 'object' && data?.teamName) teamName = data.teamName;
+    Object.values(registration.responses || {}).forEach((data) => {
+        if (data && typeof data === 'object' && 'teamName' in data) {
+            teamName = String((data as Record<string, unknown>).teamName);
+        }
     });
     return teamName;
   }
@@ -69,7 +97,7 @@ export function SubmissionDetailsPage() {
            <div>
               <p className="text-[10px] font-black text-cyan-400 font-orbitron uppercase tracking-widest mb-1">Submission Artifact [ {registration._id.substring(registration._id.length - 8).toUpperCase()} ]</p>
               <h1 className="text-4xl font-black text-white font-orbitron tracking-tight uppercase">
-                {registration.responses?.['phase_3_submissions']?.projectName || 'UNTITLED_PROJECT'}
+                {(registration.responses?.['phase_3_submissions'] as Record<string, unknown>)?.projectName as string || 'UNTITLED_PROJECT'}
               </h1>
            </div>
         </div>
@@ -124,7 +152,7 @@ export function SubmissionDetailsPage() {
 
             <div className="space-y-8">
                 {(() => {
-                  const submissionPhase = hackathon?.phases?.find((p: any) => p.id === 'phase_3_submissions');
+                  const submissionPhase = hackathon?.phases?.find((p) => p.id === 'phase_3_submissions');
                   if (!submissionPhase) return <p className="text-xs font-mono text-slate-500 italic uppercase">System phase [phase_3_submissions] not detected in database blueprint.</p>;
 
                   const phaseResponse = registration.responses?.[submissionPhase.id];
@@ -136,8 +164,12 @@ export function SubmissionDetailsPage() {
 
                   return (
                     <div className="grid gap-6">
-                        {submissionPhase.fields?.map((field: any) => {
-                          const val = typeof phaseResponse === 'object' ? phaseResponse[field.id] : phaseResponse;
+                        {submissionPhase.fields?.map((field) => {
+                          const val = (phaseResponse && typeof phaseResponse === 'object') 
+                            ? (phaseResponse as Record<string, unknown>)[field.id] 
+                            : phaseResponse;
+
+                          const displayVal = (typeof val === 'string' || typeof val === 'number') ? String(val) : '';
                           
                           return (
                             <div key={field.id} className={field.type === 'file' ? 'col-span-1' : ''}>
@@ -154,11 +186,11 @@ export function SubmissionDetailsPage() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[10px] font-black text-white font-orbitron uppercase tracking-widest mb-1">ARTIFACT_SOURCE</p>
-                                            <p className="text-[9px] font-mono text-slate-500 truncate opacity-60">{val || 'NO_PATH_LOCATED'}</p>
+                                            <p className="text-[9px] font-mono text-slate-500 truncate opacity-60">{displayVal || 'NO_PATH_LOCATED'}</p>
                                         </div>
-                                        {val && (
+                                        {displayVal && (
                                           <a 
-                                            href={val} 
+                                            href={displayVal} 
                                             target="_blank" 
                                             rel="noreferrer"
                                             className="border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-400 hover:text-black px-4 py-2 text-[9px] font-black font-orbitron tracking-widest transition-all uppercase"
@@ -171,7 +203,7 @@ export function SubmissionDetailsPage() {
                                     <div className="relative">
                                       <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-cyan-500/30" />
                                       <p className="text-sm text-white font-mono bg-white/5 px-4 py-3 border border-white/5">
-                                        {val || 'NULL_ENTRY'}
+                                        {displayVal || 'NULL_ENTRY'}
                                       </p>
                                     </div>
                                 )}

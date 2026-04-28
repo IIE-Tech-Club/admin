@@ -2,11 +2,40 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from '@tanstack/react-router'
 import Loader from '../components/ui/Loader'
 
+interface PhaseField {
+  id: string
+  label: string
+  type: string
+}
+
+interface Hackathon {
+  _id: string
+  title: string
+  phases: { id: string, name: string, fields?: PhaseField[] }[]
+}
+
+interface RegistrationResponse {
+  _id: string
+  registrationDate: string
+  user: {
+    name: string
+    email: string
+  }
+  responses: Record<string, unknown>
+}
+
+interface Invitation {
+  inviteeEmail: string
+  inviteeName?: string
+  status: string
+}
+
 export function TeamDetailsPage() {
   const { hackathonId, teamName } = useParams({ from: '/h/$hackathonId/teams/$teamName' })
   const decodedTeamName = decodeURIComponent(teamName)
-  const [registrations, setRegistrations] = useState<any[]>([])
-  const [hackathon, setHackathon] = useState<any>(null)
+  const [registrations, setRegistrations] = useState<RegistrationResponse[]>([])
+  const [hackathon, setHackathon] = useState<Hackathon | null>(null)
+  const [invitations, setInvitations] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -17,14 +46,15 @@ export function TeamDetailsPage() {
         const allRegs = await regRes.json()
         
         // Filter by team name
-        const filtered = allRegs.filter((reg: any) => {
+        const filtered = (allRegs as RegistrationResponse[]).filter((reg) => {
             const responses = reg.responses || {}
             let nameInReg = ''
             
             // Check all phases for teamName
-            Object.values(responses).forEach((data: any) => {
-                if (typeof data === 'object' && data?.teamName) {
-                    nameInReg = data.teamName
+            Object.values(responses).forEach((data) => {
+                if (data && typeof data === 'object') {
+                    const d = data as Record<string, unknown>
+                    if (d.teamName) nameInReg = String(d.teamName)
                 }
             })
             
@@ -37,6 +67,11 @@ export function TeamDetailsPage() {
         const hRes = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`)
         const hData = await hRes.json()
         setHackathon(hData)
+
+        // Fetch invitations for team
+        const iRes = await fetch(`${import.meta.env.VITE_API_URL}/invitations/team/${hackathonId}/${encodeURIComponent(decodedTeamName)}`)
+        const iData = await iRes.json()
+        setInvitations(iData)
       } catch (error) {
         console.error('Failed to fetch team details:', error)
       } finally {
@@ -63,6 +98,27 @@ export function TeamDetailsPage() {
     )
   }
 
+
+  // Calculate virtual members
+  const formationPhaseId = 'phase_2_team_formation';
+  const registeredEmails = new Set(registrations.map(r => r.user?.email?.toLowerCase()));
+  const virtualEmails: string[] = [];
+  
+  registrations.forEach(reg => {
+    const resp = reg.responses?.[formationPhaseId] as Record<string, string> | undefined;
+    if (resp) {
+      Object.keys(resp).forEach(key => {
+        if (key.startsWith('memberEmail_') && resp[key]) {
+          const email = resp[key].toLowerCase();
+          if (!registeredEmails.has(email)) {
+            virtualEmails.push(email);
+          }
+        }
+      });
+    }
+  });
+  const uniqueVirtualEmails = Array.from(new Set(virtualEmails));
+  const totalOperatives = registrations.length + uniqueVirtualEmails.length;
 
   return (
     <section className="space-y-8 pb-20">
@@ -91,7 +147,7 @@ export function TeamDetailsPage() {
             <div className="space-y-6">
               <div>
                 <p className="text-[9px] font-black text-slate-500 font-orbitron uppercase tracking-widest mb-1">Deployment Strength</p>
-                <p className="text-xl font-black text-white font-orbitron">{registrations.length} OPERATIVES</p>
+                <p className="text-xl font-black text-white font-orbitron">{totalOperatives} OPERATIVES</p>
               </div>
               <div>
                 <p className="text-[9px] font-black text-slate-500 font-orbitron uppercase tracking-widest mb-1">Sync Status</p>
@@ -102,17 +158,22 @@ export function TeamDetailsPage() {
               </div>
             </div>
           </article>
-
           <article className="glass-card p-6 border-white/10">
             <h3 className="text-xs font-black text-white font-orbitron uppercase tracking-widest mb-4">Operative Directory</h3>
             <div className="space-y-3">
-               {registrations.map((reg) => (
+               {/* Registered Operatives */}
+               {registrations.map((reg, idx) => (
                  <Link 
                     key={reg._id}
                     to="/h/$hackathonId/registrations/$registrationId"
                     params={{ hackathonId, registrationId: reg._id }}
-                    className="flex items-center gap-3 p-3 bg-white/5 border border-white/5 hover:border-cyan-500/30 transition-all group"
+                    className="flex items-center gap-3 p-3 bg-white/5 border border-white/5 hover:border-cyan-500/30 transition-all group relative overflow-hidden"
                  >
+                    {idx === 0 && (
+                      <div className="absolute top-0 right-0 bg-cyan-400 text-[7px] font-black text-slate-950 px-1.5 py-0.5 font-orbitron tracking-tighter">
+                        LEADER
+                      </div>
+                    )}
                     <div className="h-8 w-8 bg-slate-950 border border-white/10 flex items-center justify-center text-[10px] text-white/40 font-mono group-hover:text-cyan-400 transition-colors">
                         {reg.user?.name?.charAt(0) || 'U'}
                     </div>
@@ -125,7 +186,87 @@ export function TeamDetailsPage() {
                     </div>
                  </Link>
                ))}
+
+               {/* Virtual Operatives */}
+                {uniqueVirtualEmails.map((email, idx) => {
+                  const invite = invitations.find(i => i.inviteeEmail.toLowerCase() === email.toLowerCase());
+                  const isAccepted = invite?.status === 'accepted';
+                  const name = invite?.inviteeName || 'PENDING_REGISTRATION';
+                  
+                  return (
+                    <div 
+                       key={`virtual-${idx}`}
+                       className={`flex items-center gap-3 p-3 border transition-all cursor-not-allowed group ${
+                         isAccepted 
+                          ? 'bg-cyan-500/5 border-cyan-500/20 grayscale-0' 
+                          : 'bg-white/[0.02] border-white/5 opacity-50 grayscale hover:grayscale-0'
+                       }`}
+                    >
+                       <div className={`h-8 w-8 border flex items-center justify-center text-[10px] font-mono italic ${
+                         isAccepted ? 'bg-cyan-900/40 border-cyan-500/30 text-cyan-400' : 'bg-slate-900 border-white/5 text-white/20'
+                       }`}>
+                           {isAccepted ? name.charAt(0).toUpperCase() : '?'}
+                       </div>
+                       <div className="flex-1 min-w-0">
+                           <p className={`text-[11px] font-bold truncate font-orbitron uppercase tracking-tighter ${
+                             isAccepted ? 'text-cyan-400' : 'text-slate-400'
+                           }`}>
+                             {name}
+                           </p>
+                           <p className="text-[9px] text-slate-600 truncate font-mono">{email}</p>
+                       </div>
+                    </div>
+                  );
+                })}
             </div>
+          </article>
+
+          {/* Project Artifacts Section */}
+          <article className="glass-card p-6 border-cyan-500/20">
+            <h3 className="text-xs font-black text-white font-orbitron uppercase tracking-widest mb-6 border-b border-white/5 pb-4 flex items-center gap-2">
+               <svg className="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z"/></svg>
+               Project Artifacts
+            </h3>
+            {(() => {
+              const submissionReg = registrations.find(r => r.responses?.['phase_3_submissions']);
+              const submission = submissionReg?.responses?.['phase_3_submissions'] as Record<string, string> | undefined;
+              
+              if (!submissionReg || !submission) {
+                return (
+                  <div className="flex flex-col items-center justify-center py-6 border border-white/5 bg-white/5 opacity-50">
+                    <p className="text-[10px] font-black text-slate-500 font-orbitron uppercase">Packet Standby</p>
+                    <p className="text-[8px] font-mono text-slate-600 mt-1">NO DATA TRANSMITTED</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[9px] font-black text-slate-500 font-orbitron uppercase tracking-widest mb-1">Official Entry</p>
+                    <p className="text-sm font-black text-white font-orbitron uppercase truncate">{submission.projectName || 'Unnamed Project'}</p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {submission.repoLink && (
+                      <a href={submission.repoLink} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-[9px] font-bold text-cyan-400 font-orbitron uppercase hover:bg-cyan-500/20 transition-all">Repository</a>
+                    )}
+                    {submission.demoLink && (
+                      <a href={submission.demoLink} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-bold text-emerald-400 font-orbitron uppercase hover:bg-emerald-500/20 transition-all">Live Demo</a>
+                    )}
+                  </div>
+
+                  <Link 
+                    to="/h/$hackathonId/submission/$registrationId" 
+                    params={{ hackathonId, registrationId: submissionReg._id }}
+                    className="flex items-center justify-center gap-2 w-full py-3 mt-2 bg-white/5 border border-white/10 hover:border-cyan-500/40 text-[9px] font-black text-white font-orbitron uppercase tracking-[0.2em] transition-all group"
+                  >
+                    View Full Analysis
+                    <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                  </Link>
+                </div>
+              );
+            })()}
           </article>
         </aside>
 
@@ -138,28 +279,37 @@ export function TeamDetailsPage() {
 
             <div className="space-y-6">
                 {(() => {
-                  const formationPhase = hackathon?.phases?.find((p: any) => p.id === 'phase_2_team_formation');
-                  if (!formationPhase) return <p className="text-xs font-mono text-slate-500 italic uppercase">System phase [phase_2_team_formation] not detected.</p>;
+                  const formationPhase = hackathon?.phases?.find((p) => p.id === formationPhaseId);
+                  if (!formationPhase) return <p className="text-xs font-mono text-slate-500 italic uppercase">System phase [{formationPhaseId}] not detected.</p>;
 
                   const phaseResponses = registrations.map(r => r.responses?.[formationPhase.id]).filter(Boolean);
                   if (phaseResponses.length === 0) return <p className="text-[10px] font-mono text-slate-600 uppercase">No formation telemetry recorded.</p>;
 
                   return (
                     <div className="grid gap-4">
-                        {formationPhase.fields?.map((field: any) => {
-                          const values = phaseResponses.map(pr => pr[field.id]).filter(v => v !== undefined && v !== '');
+                        {formationPhase.fields?.map((field: PhaseField) => {
+                          const values = phaseResponses
+                            .map((pr) => (pr as Record<string, unknown>)[field.id])
+                            .filter((v) => v !== undefined && v !== "");
                           const uniqueValues = Array.from(new Set(values));
                           if (uniqueValues.length === 0) return null;
                           return (
-                            <div key={field.id} className="p-4 bg-slate-900/40 border border-white/5">
-                                <p className="text-[9px] font-black text-slate-500 font-orbitron uppercase tracking-widest mb-2">{field.label}</p>
-                                <p className="text-sm text-white font-mono">{String(uniqueValues[0])}</p>
+                            <div
+                              key={field.id}
+                              className="p-4 bg-slate-900/40 border border-white/5"
+                            >
+                              <p className="text-[9px] font-black text-slate-500 font-orbitron uppercase tracking-widest mb-2">
+                                {field.label}
+                              </p>
+                              <p className="text-sm text-white font-mono">
+                                {String(uniqueValues[0])}
+                              </p>
                             </div>
-                          )
+                          );
                         })}
-                    </div>
-                  );
-                })()}
+                      </div>
+                    );
+                  })()}
             </div>
           </article>
 

@@ -14,8 +14,25 @@ export type Registration = {
   checkIn: string
   status: RegistrationStatus
   phases: boolean[]
-  responses: any
-  registrationData: Record<string, any>
+  responses: Record<string, unknown>
+  registrationData: Record<string, unknown>
+}
+
+interface Hackathon {
+  _id: string
+  title: string
+  phases: { id: string }[]
+}
+
+interface RegistrationResponse {
+  _id: string
+  registrationDate: string
+  status?: RegistrationStatus
+  user?: {
+    name?: string
+    email?: string
+  }
+  responses: Record<string, unknown>
 }
 
 export function RegistrationsPage() {
@@ -23,7 +40,7 @@ export function RegistrationsPage() {
   const [data, setData] = useState<Registration[]>([])
   const [loading, setLoading] = useState(true)
 
-  const [hackathonData, setHackathonData] = useState<any>(null)
+  const [hackathonData, setHackathonData] = useState<Hackathon | null>(null)
 
   useEffect(() => {
     const fetchRegistrations = async () => {
@@ -38,7 +55,7 @@ export function RegistrationsPage() {
         
         const phases = hackathon.phases || []
         
-        const formattedUsers: Registration[] = registrations.map((reg: any) => {
+        const formattedUsers: Registration[] = (registrations as RegistrationResponse[]).map((reg) => {
             const responses = reg.responses || {}
             
             // Try to find identity info from any form phase
@@ -47,15 +64,16 @@ export function RegistrationsPage() {
             let track = 'General'
             let team = 'Individual'
 
-            const registrationData = responses['phase_1_registration'] || {}
+            const registrationData = (responses['phase_1_registration'] || {}) as Record<string, unknown>
 
             // Fallback heuristics to extract info from dynamic forms
-            Object.values(responses).forEach((data: any) => {
-                if (typeof data === 'object' && data !== null) {
-                    if (data.name && name === 'Unknown') name = data.name
-                    if (data.email && email === 'N/A') email = data.email
-                    if (data.branch) track = data.branch
-                    if (data.teamName) team = data.teamName
+            Object.values(responses).forEach((data) => {
+                if (data && typeof data === 'object') {
+                    const d = data as Record<string, unknown>
+                    if (d.name && name === 'Unknown') name = String(d.name)
+                    if (d.email && email === 'N/A') email = String(d.email)
+                    if (d.branch) track = String(d.branch)
+                    if (d.teamName) team = String(d.teamName)
                 }
             })
 
@@ -68,7 +86,7 @@ export function RegistrationsPage() {
               track: track,
               checkIn: new Date(reg.registrationDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               status: reg.status || 'Pending',
-              phases: phases.map((p: any) => responses[p.id] !== undefined),
+              phases: phases.map((p: { id: string }) => responses[p.id] !== undefined),
               responses: responses,
               registrationData: registrationData
             }

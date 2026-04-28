@@ -65,7 +65,12 @@ export function DashboardPage() {
         const hData = await hRes.json()
         const rData = await rRes.json()
 
-        setHackathon(hData)
+        if (hRes.ok) {
+            setHackathon(hData)
+        } else {
+            console.error("Hackathon fetch failed:", hData);
+            setHackathon(null);
+        }
         
         // Safety check: Ensure registrations data is an array
         if (!Array.isArray(rData)) {
@@ -138,7 +143,7 @@ export function DashboardPage() {
     { label: 'Total Entities', value: String(total), delta: 'Deployed in system', tone: 'cyan' },
     { label: 'Validation Rate', value: `${total > 0 ? Math.round((approved / total) * 100) : 0}%`, delta: `${pending} awaiting review`, tone: 'emerald' },
     { label: 'Active Teams', value: String(new Set(registrations.filter(r => r.team !== 'Individual').map(r => r.team)).size), delta: 'Squad formations', tone: 'amber' },
-    { label: 'Network Phases', value: String(hackathon?.phases.length || 0), delta: 'Active routing nodes', tone: 'rose' },
+    { label: 'Network Phases', value: String(hackathon?.phases?.length || 0), delta: 'Active routing nodes', tone: 'rose' },
   ]
 
   // Track Distribution
