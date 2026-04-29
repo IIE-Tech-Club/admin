@@ -6,7 +6,7 @@ import Loader from "../components/ui/Loader";
 import ReactMarkdown from "react-markdown";
 import {
   DndContext,
-  closestCenter,
+  closestCorners,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -518,20 +518,26 @@ export function SettingsPage() {
 
   const movePhaseUp = (index: number) => {
     if (index === 0) return;
-    const newPhases = [...phases];
-    const temp = newPhases[index];
-    newPhases[index] = newPhases[index - 1];
-    newPhases[index - 1] = temp;
-    setPhases(newPhases);
+    setPhases((prev) => {
+      const newPhases = [...prev];
+      [newPhases[index], newPhases[index - 1]] = [
+        newPhases[index - 1],
+        newPhases[index],
+      ];
+      return newPhases;
+    });
   };
 
   const movePhaseDown = (index: number) => {
     if (index === phases.length - 1) return;
-    const newPhases = [...phases];
-    const temp = newPhases[index];
-    newPhases[index] = newPhases[index + 1];
-    newPhases[index + 1] = temp;
-    setPhases(newPhases);
+    setPhases((prev) => {
+      const newPhases = [...prev];
+      [newPhases[index], newPhases[index + 1]] = [
+        newPhases[index + 1],
+        newPhases[index],
+      ];
+      return newPhases;
+    });
   };
 
   const sensors = useSensors(
@@ -549,26 +555,43 @@ export function SettingsPage() {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       setPhases((prevPhases) => {
-        const newPhases = [...prevPhases];
-        const fields = newPhases[pIdx].fields || [];
-        const oldIndex = fields.findIndex((f) => f.id === active.id);
-        const newIndex = fields.findIndex((f) => f.id === over.id);
-        newPhases[pIdx].fields = arrayMove(fields, oldIndex, newIndex);
-        return newPhases;
+        return prevPhases.map((phase, idx) => {
+          if (idx === pIdx) {
+            const fields = phase.fields || [];
+            const oldIndex = fields.findIndex((f) => f.id === active.id);
+            const newIndex = fields.findIndex((f) => f.id === over.id);
+            return {
+              ...phase,
+              fields: arrayMove(fields, oldIndex, newIndex),
+            };
+          }
+          return phase;
+        });
       });
     }
   };
 
   const addField = (phaseIndex: number) => {
-    const newPhases = [...phases];
-    if (!newPhases[phaseIndex].fields) newPhases[phaseIndex].fields = [];
-    newPhases[phaseIndex].fields!.push({
-      id: `field_${Date.now()}`,
-      label: "New Field",
-      type: "text",
-      required: true,
+    setPhases((prevPhases) => {
+      return prevPhases.map((phase, idx) => {
+        if (idx === phaseIndex) {
+          const fields = phase.fields || [];
+          return {
+            ...phase,
+            fields: [
+              ...fields,
+              {
+                id: `field_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                label: "New Field",
+                type: "text",
+                required: true,
+              },
+            ],
+          };
+        }
+        return phase;
+      });
     });
-    setPhases(newPhases);
   };
 
   const updateField = (
@@ -576,20 +599,36 @@ export function SettingsPage() {
     fieldIndex: number,
     updates: Partial<PhaseField>,
   ) => {
-    const newPhases = [...phases];
-    newPhases[phaseIndex].fields![fieldIndex] = {
-      ...newPhases[phaseIndex].fields![fieldIndex],
-      ...updates,
-    };
-    setPhases(newPhases);
+    setPhases((prevPhases) => {
+      return prevPhases.map((phase, pIdx) => {
+        if (pIdx === phaseIndex) {
+          const newFields = [...(phase.fields || [])];
+          newFields[fieldIndex] = {
+            ...newFields[fieldIndex],
+            ...updates,
+          };
+          return {
+            ...phase,
+            fields: newFields,
+          };
+        }
+        return phase;
+      });
+    });
   };
 
   const removeField = (phaseIndex: number, fieldIndex: number) => {
-    const newPhases = [...phases];
-    newPhases[phaseIndex].fields = newPhases[phaseIndex].fields!.filter(
-      (_, i) => i !== fieldIndex,
-    );
-    setPhases(newPhases);
+    setPhases((prevPhases) => {
+      return prevPhases.map((phase, pIdx) => {
+        if (pIdx === phaseIndex) {
+          return {
+            ...phase,
+            fields: (phase.fields || []).filter((_, i) => i !== fieldIndex),
+          };
+        }
+        return phase;
+      });
+    });
   };
 
   if (loading) {
@@ -636,7 +675,7 @@ export function SettingsPage() {
   }
 
   return (
-    <section className="space-y-8 pb-20 relative overflow-hidden">
+    <section className="space-y-5 pb-16 relative overflow-hidden">
       {/* Background Radial Glow */}
       <div
         className="pointer-events-none fixed inset-0 z-0"
@@ -647,19 +686,18 @@ export function SettingsPage() {
       />
 
       <header
-        className="glass-card p-8 border-cyan-500/30 flex flex-wrap gap-4 justify-between items-end relative z-10 animate-pulse-slow"
-        style={{ animation: "tech-pulse 4s infinite alternate" }}
+        className="glass-card p-5 sm:p-8 border-cyan-500/30 flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-end relative z-10"
       >
         <div>
           <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 font-orbitron mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#00ffff] animate-pulse" />
             System Config
           </p>
-          <h1 className="text-4xl font-black text-white md:text-5xl tracking-tight font-orbitron">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight font-orbitron">
             Phase <span className="text-cyan-400 text-glow">Architect</span>
           </h1>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col sm:items-end gap-2">
           {/* System Logs */}
           <div className="hidden md:flex flex-col items-end text-[8px] font-mono text-cyan-500/50 uppercase tracking-widest mb-2">
             <span>[SYS] ARCHITECT_NODE_ACTIVE</span>
@@ -668,7 +706,7 @@ export function SettingsPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="neon-btn-cyan !py-3 !px-8 relative overflow-hidden group"
+            className="neon-btn-cyan w-full sm:w-auto relative overflow-hidden group"
           >
             <span className="relative z-10 flex items-center gap-2">
               {saving ? (
@@ -843,7 +881,7 @@ export function SettingsPage() {
               <div className="space-y-4">
                 <DndContext
                   sensors={sensors}
-                  collisionDetection={closestCenter}
+                  collisionDetection={closestCorners}
                   onDragEnd={(event) => handleFieldDragEnd(event, pIdx)}
                 >
                   <SortableContext

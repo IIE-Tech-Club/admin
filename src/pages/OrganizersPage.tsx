@@ -129,9 +129,14 @@ export function OrganizersPage() {
     formData.append('file', croppedImage)
     formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET)
 
+    const isPDF = croppedImage.startsWith('data:application/pdf');
+    const resourceType = isPDF ? "raw" : "image";
+    formData.append('resource_type', resourceType);
+    formData.append('folder', `hackathons/${hackathonId}/organisers`)
+
     try {
       const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/upload`,
+        `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
         {
           method: 'POST',
           body: formData,
@@ -167,24 +172,24 @@ export function OrganizersPage() {
   }
 
   return (
-    <section className="space-y-8 pb-20">
-      <header className="glass-card p-8 border-cyan-500/20 flex flex-wrap gap-4 justify-between items-end">
+    <section className="space-y-5 pb-16">
+      <header className="glass-card p-5 sm:p-8 border-cyan-500/20 flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-end">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 font-orbitron mb-2">
             Team Management
           </p>
-          <h1 className="text-4xl font-black text-white md:text-5xl tracking-tight font-orbitron">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight font-orbitron">
             Organizer <span className="text-cyan-400 text-glow">Profiles</span>
           </h1>
         </div>
-        <div className="flex gap-4">
-          <button onClick={addOrganizer} className="neon-btn-outline !py-3 !px-6">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button onClick={addOrganizer} className="neon-btn-outline">
             + ADD ORGANIZER
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="neon-btn-cyan !py-3 !px-8"
+            className="neon-btn-cyan"
           >
             {saving ? 'SYNCING...' : 'COMMIT CHANGES'}
           </button>

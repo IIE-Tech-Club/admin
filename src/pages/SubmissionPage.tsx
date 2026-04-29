@@ -69,31 +69,32 @@ export function SubmissionPage() {
   }, [hackathonId])
 
   return (
-    <section className="space-y-8">
-      <header className="glass-card p-8 border-cyan-500/20">
+    <section className="space-y-5 pb-16">
+      <header className="glass-card p-5 sm:p-8 border-cyan-500/20">
         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 font-orbitron mb-2">
           Submission Protocol
         </p>
-        <h1 className="text-4xl font-black text-white md:text-5xl tracking-tight font-orbitron">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight font-orbitron">
           Submission <span className="text-cyan-400 text-glow">Archive</span>
         </h1>
-        <p className="mt-4 text-sm text-slate-400 font-medium tracking-wide">
-          Access and manage project artifacts submitted by participants during the final phase.
+        <p className="mt-3 text-xs sm:text-sm text-slate-400 font-medium tracking-wide">
+          Project artifacts submitted by participants during the final phase.
         </p>
       </header>
 
-      <article className="glass-card p-8 border-cyan-500/10">
-        <div className="mb-8 flex items-center gap-4 border-b border-cyan-500/10 pb-6">
-          <div className="h-8 w-1 bg-cyan-400 shadow-[0_0_15px_#00ffff]" />
-          <h2 className="text-2xl font-black text-white tracking-widest font-orbitron">Packet Stream</h2>
+      <article className="glass-card border-cyan-500/10 overflow-hidden">
+        <div className="p-4 sm:p-6 border-b border-cyan-500/10 flex items-center gap-3">
+          <div className="h-5 w-1 bg-cyan-400 shadow-[0_0_10px_#00ffff]" />
+          <h2 className="text-base sm:text-xl font-black text-white tracking-wider font-orbitron">Packet Stream</h2>
         </div>
 
-        <div className="soft-scrollbar overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden sm:block soft-scrollbar overflow-x-auto">
           <table className="w-full min-w-[400px] border-collapse">
             <thead>
               <tr className="text-left border-b border-white/5">
-                <th className="pb-4 px-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Packet UID</th>
-                <th className="pb-4 px-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Deployment</th>
+                <th className="pb-4 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Packet UID</th>
+                <th className="pb-4 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Deployment</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -124,6 +125,28 @@ export function SubmissionPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile card list */}
+        <div className="sm:hidden divide-y divide-white/5">
+          {loading ? (
+            <div className="py-10"><Loader text="Scanning..." /></div>
+          ) : submissions.length === 0 ? (
+            <div className="py-12 text-center text-slate-600 font-orbitron text-xs uppercase tracking-widest">No packets detected</div>
+          ) : (
+            submissions.map((item) => (
+              <Link key={item.regId} to="/h/$hackathonId/submission/$registrationId" params={{ hackathonId, registrationId: item.regId }}
+                className="flex items-center justify-between p-4 hover:bg-cyan-500/[0.04] active:bg-cyan-500/[0.08] transition-all">
+                <div>
+                  <p className="text-xs font-black text-white uppercase font-orbitron">{item.team}</p>
+                  <p className="text-[9px] text-cyan-400/60 font-orbitron mt-0.5">{item.id}</p>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,255,255,0.4)" strokeWidth="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </Link>
+            ))
+          )}
         </div>
       </article>
     </section>

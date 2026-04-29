@@ -100,28 +100,28 @@ export function TeamsPage() {
   }, [hackathonId])
 
   return (
-    <section className="space-y-8">
-      <header className="glass-card p-8 border-cyan-500/20">
+    <section className="space-y-5 pb-16">
+      <header className="glass-card p-5 sm:p-8 border-cyan-500/20">
         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 font-orbitron mb-2">
           Tactical Units
         </p>
-        <h1 className="text-4xl font-black text-white md:text-5xl tracking-tight font-orbitron">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight font-orbitron">
           Team <span className="text-cyan-400 text-glow">Roster</span>
-          {hackathonData && (
-            <span className="block text-sm text-slate-500 mt-2 font-mono tracking-widest opacity-60 uppercase">
-              NODE: {hackathonData.title}
-            </span>
-          )}
         </h1>
-        <p className="mt-4 text-sm text-slate-400 font-medium tracking-wide">
-          Manage and review the active tactical units deployed across the arena.
+        {hackathonData && (
+          <p className="mt-1 text-[10px] text-slate-500 font-mono tracking-widest uppercase">
+            NODE: {hackathonData.title}
+          </p>
+        )}
+        <p className="mt-3 text-xs sm:text-sm text-slate-400 font-medium tracking-wide">
+          Active tactical units deployed across the arena.
         </p>
       </header>
 
-      <article className="glass-card p-8 border-cyan-500/10">
-        <div className="mb-8 flex items-center gap-4 border-b border-cyan-500/10 pb-6">
-          <div className="h-8 w-1 bg-cyan-400 shadow-[0_0_15px_#00ffff]" />
-          <h2 className="text-2xl font-black text-white tracking-widest font-orbitron">Active Squads</h2>
+      <article className="glass-card border-cyan-500/10 overflow-hidden">
+        <div className="p-4 sm:p-6 border-b border-cyan-500/10 flex items-center gap-3">
+          <div className="h-5 w-1 bg-cyan-400 shadow-[0_0_10px_#00ffff]" />
+          <h2 className="text-base sm:text-xl font-black text-white tracking-wider font-orbitron">Active Squads</h2>
         </div>
 
         <div className="soft-scrollbar overflow-x-auto">

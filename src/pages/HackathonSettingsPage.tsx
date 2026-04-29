@@ -147,17 +147,28 @@ export function HackathonSettingsPage() {
   const handleCropComplete = async (croppedImage: string) => {
     setEditingImage(null)
     setUploadingBanner(true)
+    const formData = new FormData()
+    formData.append('file', croppedImage)
+    formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET)
+
+    const isPDF = croppedImage.startsWith('data:application/pdf')
+    const resourceType = isPDF ? 'raw' : 'image'
+    formData.append('resource_type', resourceType)
+    formData.append('folder', `hackathons/${hackathonId}/banners`)
+
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/upload-banner`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: croppedImage })
-      })
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )
       const data = await res.json()
-      if (res.ok) {
-        setSettings(s => ({ ...s, banner: data.url }))
+      if (data.secure_url) {
+        setSettings(s => ({ ...s, banner: data.secure_url }))
       } else {
-        alert(`Upload failed: ${data.message}`)
+        alert(`Upload failed: ${data.error?.message || 'Unknown error'}`)
       }
     } catch (err) {
       console.error(err)
@@ -184,25 +195,25 @@ export function HackathonSettingsPage() {
     )
   }
 
-  const FIELD_CLASS = "bg-slate-900 border border-white/10 px-3 py-2 w-full text-sm font-mono focus:border-cyan-400 outline-none transition-colors text-white"
+  const FIELD_CLASS = "admin-input"
   const LABEL_CLASS = "block text-[10px] text-slate-500 font-orbitron uppercase mb-1 tracking-widest"
 
   return (
-    <section className="space-y-8 pb-20">
+    <section className="space-y-5 pb-16">
       {/* Header */}
-      <header className="glass-card p-8 border-cyan-500/20 flex flex-wrap gap-4 justify-between items-end">
+      <header className="glass-card p-5 sm:p-8 border-cyan-500/20 flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-end">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 font-orbitron mb-2">
             System Config
           </p>
-          <h1 className="text-4xl font-black text-white md:text-5xl tracking-tight font-orbitron">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight font-orbitron">
             Hackathon <span className="text-cyan-400 text-glow">Settings</span>
           </h1>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="neon-btn-cyan !py-3 !px-8"
+          className="neon-btn-cyan w-full sm:w-auto"
         >
           {saving ? 'SAVING...' : 'SAVE SETTINGS'}
         </button>

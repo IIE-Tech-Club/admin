@@ -3,13 +3,38 @@ import { useParams, Link, useNavigate } from '@tanstack/react-router'
 import { auth } from '../lib/firebase'
 import Loader from '../components/ui/Loader'
 
+interface Registration {
+  _id: string
+  registrationDate: string
+  status: string
+  responses: Record<string, unknown>
+  user?: {
+    name?: string
+    email?: string
+    photoURL?: string
+  }
+}
+
+interface Hackathon {
+  id: string
+  title: string
+  phases: {
+    id: string
+    name: string
+    type: string
+    fields?: { id: string; label: string; type: string }[]
+  }[]
+}
+
 export function RegistrationDetailsPage() {
-  const { hackathonId, registrationId } = useParams({ from: '/h/$hackathonId/registrations/$registrationId' })
-  const navigate = useNavigate()
-  const [registration, setRegistration] = useState<any>(null)
-  const [hackathon, setHackathon] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [deleting, setDeleting] = useState(false)
+  const { hackathonId, registrationId } = useParams({
+    from: "/h/$hackathonId/registrations/$registrationId",
+  });
+  const navigate = useNavigate();
+  const [registration, setRegistration] = useState<Registration | null>(null);
+  const [hackathon, setHackathon] = useState<Hackathon | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,8 +75,9 @@ export function RegistrationDetailsPage() {
         const err = await response.json()
         alert(`Deletion Protocol Failed: ${err.message}`)
       }
-    } catch (error: any) {
-      alert(`System Error: ${error.message}`)
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Internal System Failure";
+      alert(`System Error: ${msg}`);
     } finally {
       setDeleting(false)
     }
@@ -78,8 +104,11 @@ export function RegistrationDetailsPage() {
   const getParticipantName = () => {
     if (registration.user?.name) return registration.user.name;
     let name = 'Unknown Entity';
-    Object.values(registration.responses || {}).forEach((data: any) => {
-        if (typeof data === 'object' && data?.name) name = data.name;
+    Object.values(registration.responses || {}).forEach((data) => {
+        if (typeof data === 'object' && data !== null) {
+            const d = data as Record<string, unknown>;
+            if (d.name) name = String(d.name);
+        }
     });
     return name;
   }
@@ -87,8 +116,11 @@ export function RegistrationDetailsPage() {
   // Helper to extract team name
   const getTeamName = () => {
     let teamName = '';
-    Object.values(registration.responses || {}).forEach((data: any) => {
-        if (typeof data === 'object' && data?.teamName) teamName = data.teamName;
+    Object.values(registration.responses || {}).forEach((data) => {
+        if (typeof data === 'object' && data !== null) {
+            const d = data as Record<string, unknown>;
+            if (d.teamName) teamName = String(d.teamName);
+        }
     });
     return teamName;
   }
@@ -96,27 +128,27 @@ export function RegistrationDetailsPage() {
   const teamName = getTeamName();
 
   return (
-    <section className="space-y-8 pb-20">
-      <header className="flex items-center justify-between">
-        <div>
-          <Link 
-            to="/h/$hackathonId/registrations"
-            params={{ hackathonId }}
-            className="text-[10px] font-black text-slate-500 hover:text-cyan-400 font-orbitron uppercase tracking-widest transition-colors flex items-center gap-2 mb-4"
-          >
-            ← BACK TO MANIFEST
-          </Link>
-          <div className="flex items-center gap-4">
-             <div className="h-10 w-1 bg-cyan-400 shadow-[0_0_15px_#00ffff]" />
-             <div>
-                <p className="text-[10px] font-black text-cyan-400 font-orbitron uppercase tracking-widest mb-1">Identity File [ {registration._id.substring(registration._id.length - 8).toUpperCase()} ]</p>
-                <h1 className="text-4xl font-black text-white font-orbitron tracking-tight uppercase">{getParticipantName()}</h1>
-             </div>
+    <section className="space-y-5 pb-16">
+      <header>
+        <Link
+          to="/h/$hackathonId/registrations"
+          params={{ hackathonId }}
+          className="text-[10px] font-black text-slate-500 hover:text-cyan-400 font-orbitron uppercase tracking-widest transition-colors flex items-center gap-2 mb-4"
+        >
+          ← BACK TO MANIFEST
+        </Link>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-8 sm:h-10 w-1 bg-cyan-400 shadow-[0_0_15px_#00ffff] shrink-0" />
+            <div>
+              <p className="text-[10px] font-black text-cyan-400 font-orbitron uppercase tracking-widest mb-1">Identity File [ {registration._id.substring(registration._id.length - 8).toUpperCase()} ]</p>
+              <h1 className="text-2xl sm:text-4xl font-black text-white font-orbitron tracking-tight uppercase truncate">{getParticipantName()}</h1>
+            </div>
           </div>
-        </div>
-        <div className="hidden md:block text-right">
-           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enrollment Status</p>
-           <p className="text-lg font-black text-cyan-400 font-orbitron">{registration.status?.toUpperCase() || 'PENDING'}</p>
+          <div className="sm:text-right">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Enrollment Status</p>
+            <p className="text-lg font-black text-cyan-400 font-orbitron">{registration.status?.toUpperCase() || 'PENDING'}</p>
+          </div>
         </div>
       </header>
 
@@ -178,7 +210,7 @@ export function RegistrationDetailsPage() {
 
             <div className="space-y-8">
                 {(() => {
-                  const registrationPhase = hackathon?.phases?.find((p: any) => p.id === 'phase_1_registration');
+                  const registrationPhase = hackathon?.phases?.find((p) => p.id === 'phase_1_registration');
                   if (!registrationPhase) return <p className="text-xs font-mono text-slate-500 italic">Phase [phase_1_registration] not located in database.</p>;
                   
                   const phaseResponse = registration.responses?.[registrationPhase.id];
@@ -202,8 +234,10 @@ export function RegistrationDetailsPage() {
                       </div>
                       
                       <div className="grid gap-6 md:grid-cols-2">
-                        {registrationPhase.fields?.map((field: any) => {
-                          const val = typeof phaseResponse === 'object' ? phaseResponse[field.id] : phaseResponse;
+                        {registrationPhase.fields?.map((field) => {
+                          const val = typeof phaseResponse === 'object' && phaseResponse !== null 
+                            ? (phaseResponse as Record<string, unknown>)[field.id] 
+                            : phaseResponse;
                           
                           return (
                             <div key={field.id} className={field.type === 'file' ? 'col-span-2' : ''}>
@@ -220,11 +254,11 @@ export function RegistrationDetailsPage() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-[10px] font-black text-white font-orbitron uppercase tracking-widest mb-1">DATA_OBJECT_ATTACHMENT</p>
-                                        <p className="text-[9px] font-mono text-slate-500 truncate opacity-60">{val || 'NO_PATH_LOCATED'}</p>
+                                        <p className="text-[9px] font-mono text-slate-500 truncate opacity-60">{String(val || 'NO_PATH_LOCATED')}</p>
                                     </div>
-                                    {val && (
+                                    {!!val && (
                                       <a 
-                                        href={val} 
+                                        href={String(val)} 
                                         target="_blank" 
                                         rel="noreferrer"
                                         className="border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-400 hover:text-black px-4 py-2 text-[9px] font-black font-orbitron tracking-widest transition-all uppercase"
@@ -237,7 +271,7 @@ export function RegistrationDetailsPage() {
                                 <div className="relative">
                                   <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-cyan-500/30" />
                                   <p className="text-sm text-white/90 font-medium leading-relaxed bg-white/5 px-4 py-3 font-mono border border-white/5">
-                                    {val === true ? 'TRUE // VERIFIED' : val === false ? 'FALSE // REJECTED' : val || 'NULL_ENTRY'}
+                                    {val === true ? 'TRUE // VERIFIED' : val === false ? 'FALSE // REJECTED' : String(val || 'NULL_ENTRY')}
                                   </p>
                                 </div>
                               )}

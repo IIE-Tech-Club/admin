@@ -9,6 +9,13 @@ interface ImageEditorProps {
   onCancel: () => void
 }
 
+interface Area {
+  width: number
+  height: number
+  x: number
+  y: number
+}
+
 export const ImageEditor: React.FC<ImageEditorProps> = ({ 
   image, 
   aspect = 4 / 3, 
@@ -17,17 +24,18 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
 }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
 
   const onCropChange = (crop: { x: number; y: number }) => {
     setCrop(crop)
   }
 
-  const onCropCompleteInternal = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
+  const onCropCompleteInternal = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels)
   }, [])
 
   const handleSave = async () => {
+    if (!croppedAreaPixels) return;
     try {
       const croppedImage = await getCroppedImg(image, croppedAreaPixels)
       if (croppedImage) {

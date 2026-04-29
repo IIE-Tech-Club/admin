@@ -177,29 +177,31 @@ export function SubmissionDetailsPage() {
                                     <span className="h-1 w-1 bg-cyan-400" />
                                     <p className="text-[9px] font-black text-slate-500 font-orbitron uppercase tracking-widest">{field.label}</p>
                                 </div>
-                                {field.type === 'file' ? (
-                                    <div className="flex items-center gap-4 p-4 bg-slate-950 border border-white/5 group-hover:border-cyan-500/20 transition-colors">
-                                        <div className="h-12 w-12 bg-cyan-500/5 border border-cyan-500/10 flex items-center justify-center text-cyan-400 text-xl">
-                                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                          </svg>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-black text-white font-orbitron uppercase tracking-widest mb-1">ARTIFACT_SOURCE</p>
-                                            <p className="text-[9px] font-mono text-slate-500 truncate opacity-60">{displayVal || 'NO_PATH_LOCATED'}</p>
-                                        </div>
-                                        {displayVal && (
-                                          <a 
-                                            href={displayVal} 
-                                            target="_blank" 
-                                            rel="noreferrer"
-                                            className="border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-400 hover:text-black px-4 py-2 text-[9px] font-black font-orbitron tracking-widest transition-all uppercase"
-                                          >
-                                            OPEN ASSET
-                                          </a>
-                                        )}
-                                    </div>
-                                ) : (
+                                        {field.type === 'file' ? (
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 bg-slate-950 border border-white/5 hover:border-cyan-500/20 transition-all group/artifact">
+                                                <div className="h-14 w-14 bg-cyan-500/5 border border-cyan-500/10 flex items-center justify-center text-cyan-400 group-hover/artifact:border-cyan-400/50 group-hover/artifact:shadow-[0_0_15px_rgba(0,245,255,0.1)] transition-all">
+                                                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                  </svg>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[10px] font-black text-cyan-400 font-orbitron uppercase tracking-widest mb-1">ARTIFACT_SOURCE</p>
+                                                    <p className="text-[9px] font-mono text-slate-500 truncate opacity-60 hover:opacity-100 transition-opacity">{displayVal || 'NO_PATH_LOCATED'}</p>
+                                                </div>
+                                                {displayVal && (
+                                                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                                                    <a 
+                                                      href={displayVal} 
+                                                      target="_blank" 
+                                                      rel="noopener noreferrer"
+                                                      className="flex-1 sm:flex-none border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-400 hover:text-black px-6 py-2.5 text-[9px] font-black font-orbitron tracking-widest transition-all uppercase text-center"
+                                                    >
+                                                      Open Asset
+                                                    </a>
+                                                  </div>
+                                                )}
+                                            </div>
+                                        ) : (
                                     <div className="relative">
                                       <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-cyan-500/30" />
                                       <p className="text-sm text-white font-mono bg-white/5 px-4 py-3 border border-white/5">

@@ -273,7 +273,7 @@ export function SelectHackathonPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-orbitron p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-white font-orbitron px-4 py-6 sm:p-8 relative overflow-hidden">
       {/* Background Decor */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.05),transparent_70%)]" />
@@ -282,21 +282,21 @@ export function SelectHackathonPage() {
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">
-        <header className="mb-16 flex items-end justify-between border-b border-white/10 pb-8">
+        <header className="mb-8 sm:mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-white/10 pb-6 sm:pb-8 gap-5">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-cyan-400 mb-2">
               Central Command
             </p>
-            <h1 className="text-5xl font-black tracking-tighter">
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tighter">
               SELECT <span className="text-cyan-400">NODE</span>
             </h1>
           </div>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="neon-btn-cyan !py-3 !px-8"
+              className="neon-btn-cyan w-full sm:w-auto"
             >
-              INITIALIZE NEW HACKATHON
+              + INITIALIZE NEW HACKATHON
             </button>
           </div>
         </header>
@@ -306,7 +306,7 @@ export function SelectHackathonPage() {
             <Loader text="Fetching Active Nodes..." />
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {hackathons.map((h) => {
               const status = getHackathonStatus(h);
               return (
@@ -432,8 +432,8 @@ export function SelectHackathonPage() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="glass-card w-full max-w-xl p-8 border-cyan-500/30 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="glass-card w-full sm:max-w-xl p-5 sm:p-8 border-cyan-500/30 max-h-[92vh] overflow-y-auto rounded-none sm:rounded">
             <div className="flex items-center justify-between mb-8 border-b border-cyan-500/10 pb-4">
               <h2 className="text-2xl font-black tracking-widest">
                 INITIALIZE <span className="text-cyan-400">NODE</span>
@@ -458,7 +458,7 @@ export function SelectHackathonPage() {
                   onChange={(e) =>
                     setNewHackathon({ ...newHackathon, title: e.target.value })
                   }
-                  className="w-full bg-slate-900 border border-white/10 p-3 text-sm focus:border-cyan-400 outline-none transition-colors"
+                  className="admin-input"
                   placeholder="e.g. CodeCraft 2026"
                 />
               </div>
@@ -476,13 +476,13 @@ export function SelectHackathonPage() {
                       tagline: e.target.value,
                     })
                   }
-                  className="w-full bg-slate-900 border border-white/10 p-3 text-sm focus:border-cyan-400 outline-none transition-colors"
+                  className="admin-input"
                   placeholder="Build the future..."
                 />
               </div>
 
               {/* Real datetime fields */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
                     Start Date & Time{" "}
@@ -526,7 +526,7 @@ export function SelectHackathonPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                     Display Date (e.g., "May 15-17")
