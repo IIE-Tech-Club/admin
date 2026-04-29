@@ -329,6 +329,7 @@ export function SelectHackathonPage() {
                           src={h.banner}
                           className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-all duration-700 group-hover:scale-110"
                           alt=""
+                          loading="eager"
                         />
                       )
                     ) : (
