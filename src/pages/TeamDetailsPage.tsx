@@ -22,6 +22,12 @@ interface RegistrationResponse {
     email: string
   }
   responses: Record<string, unknown>
+  evaluations?: {
+    judgeEmail: string;
+    scores: Record<string, number>;
+    feedback?: string;
+    evaluatedAt: string;
+  }[]
 }
 
 interface Invitation {
@@ -254,6 +260,14 @@ export function TeamDetailsPage() {
                     {submission.demoLink && (
                       <a href={submission.demoLink} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-bold text-emerald-400 font-orbitron uppercase hover:bg-emerald-500/20 transition-all">Live Demo</a>
                     )}
+                    {Object.entries(submission).map(([key, val]) => {
+                      if (typeof val === 'string' && val.includes('cloudinary.com') && key !== 'banner') {
+                        return (
+                          <a key={key} href={val} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 text-[9px] font-bold text-purple-400 font-orbitron uppercase hover:bg-purple-500/20 transition-all">Project PDF/Asset</a>
+                        );
+                      }
+                      return null;
+                    })}
                   </div>
 
                   <Link 
@@ -361,6 +375,56 @@ export function TeamDetailsPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </article>
+        </div>
+        
+        {/* Evaluations Section */}
+        <div className="lg:col-span-3 space-y-6">
+          <article className="glass-card p-8 border-cyan-500/20">
+            <h3 className="text-xl font-black text-white font-orbitron tracking-widest mb-8 flex items-center gap-4">
+              <span className="text-cyan-400 text-2xl font-mono">/</span> Evaluation Telemetry
+            </h3>
+            <div className="space-y-6">
+              {(() => {
+                const regsWithEvals = registrations.filter(r => r.evaluations && r.evaluations.length > 0);
+                if (regsWithEvals.length === 0) {
+                   return <p className="text-[10px] font-mono text-slate-600 uppercase">No evaluation data available.</p>;
+                }
+                
+                // Aggregate evaluations from all team members (usually only one has it, but just in case)
+                const allEvals = regsWithEvals.flatMap(r => r.evaluations || []);
+                
+                return (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {allEvals.map((ev, i) => {
+                      const totalScore = Object.values(ev.scores).reduce((a, b) => a + b, 0);
+                      return (
+                        <div key={i} className="p-4 bg-slate-900/40 border border-cyan-500/20">
+                          <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-2">
+                            <span className="text-[10px] font-black text-cyan-400 font-orbitron uppercase tracking-widest">{ev.judgeEmail}</span>
+                            <span className="text-xs font-bold text-white font-mono bg-cyan-500/20 px-2 py-1 rounded">Total: {totalScore}</span>
+                          </div>
+                          <div className="space-y-2 mb-4">
+                            {Object.entries(ev.scores).map(([param, score]) => (
+                              <div key={param} className="flex justify-between text-xs font-mono">
+                                <span className="text-slate-400">{param}</span>
+                                <span className="text-white font-bold">{score}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {ev.feedback && (
+                            <div className="pt-2 border-t border-white/5">
+                              <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Feedback</p>
+                              <p className="text-sm text-slate-300 italic">"{ev.feedback}"</p>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           </article>
         </div>

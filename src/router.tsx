@@ -14,6 +14,7 @@ import { TeamDetailsPage } from './pages/TeamDetailsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { HackathonSettingsPage } from './pages/HackathonSettingsPage'
 import { OrganizersPage } from './pages/OrganizersPage'
+import { JudgesPage } from './pages/JudgesPage'
 import { SelectHackathonPage } from './pages/SelectHackathonPage'
 
 const rootRoute = createRootRoute()
@@ -92,6 +93,12 @@ const organizersRoute = createRoute({
   component: OrganizersPage,
 })
 
+const judgesRoute = createRoute({
+  getParentRoute: () => hackathonParentRoute,
+  path: '/judges',
+  component: JudgesPage,
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   hackathonParentRoute.addChildren([
@@ -104,6 +111,7 @@ const routeTree = rootRoute.addChildren([
     submissionDetailRoute,
     phasesRoute,
     organizersRoute,
+    judgesRoute,
     settingsRoute,
   ]),
 ])

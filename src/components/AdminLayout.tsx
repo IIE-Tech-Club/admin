@@ -94,6 +94,14 @@ function SettingsIcon() {
     </svg>
   );
 }
+function JudgeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11l18-5v12L3 14v-3z" />
+      <path d="M11 6v12" />
+    </svg>
+  );
+}
 function ExitIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -325,6 +333,13 @@ export function AdminLayout() {
       icon: <OrgIcon />,
     },
     {
+      to: "/h/$hackathonId/judges",
+      params: { hackathonId },
+      label: "Judges",
+      badge: "JDG",
+      icon: <JudgeIcon />,
+    },
+    {
       to: "/h/$hackathonId/settings",
       params: { hackathonId },
       label: "Settings",
@@ -347,6 +362,7 @@ export function AdminLayout() {
     Submission: { title: "Submission", subtitle: "Judging pipeline and latest uploads" },
     Phases: { title: "Phase Architect", subtitle: "Design and configure registration phases" },
     Organizers: { title: "Organizers", subtitle: "Manage team profiles, roles, and social presence" },
+    Judges: { title: "Judges", subtitle: "Manage hackathon evaluators and scoring parameters" },
     Settings: { title: "Hackathon Settings", subtitle: "Name, contact email, and identity configuration" },
   };
 
