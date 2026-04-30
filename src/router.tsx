@@ -16,8 +16,11 @@ import { HackathonSettingsPage } from './pages/HackathonSettingsPage'
 import { OrganizersPage } from './pages/OrganizersPage'
 import { JudgesPage } from './pages/JudgesPage'
 import { SelectHackathonPage } from './pages/SelectHackathonPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 
-const rootRoute = createRootRoute()
+const rootRoute = createRootRoute({
+  notFoundComponent: NotFoundPage,
+})
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -119,6 +122,7 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
+  defaultNotFoundComponent: NotFoundPage,
 })
 
 declare module '@tanstack/react-router' {
