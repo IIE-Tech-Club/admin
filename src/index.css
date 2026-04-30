@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
 
 @import "tailwindcss/base";
 @import "tailwindcss/components";
@@ -6,8 +6,7 @@
 
 @layer base {
   :root {
-    --font-orbitron: 'Orbitron', sans-serif;
-    --font-grotesk: 'Space Grotesk', sans-serif;
+    --font-medieval: 'MedievalSharp', cursive;
     --neon-cyan: #00ffff;
     --neon-orange: #ff7300;
     --bg-deep: #020617;
@@ -33,7 +32,7 @@
     margin: 0;
     background-color: var(--bg-deep);
     color: var(--text-primary);
-    font-family: var(--font-grotesk);
+    font-family: var(--font-medieval);
     overflow-x: hidden;
     position: relative;
     min-height: 100vh;
@@ -53,7 +52,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-orbitron);
+    font-family: var(--font-medieval);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -134,7 +133,7 @@
     border-radius: 2px;
     padding: 0.6rem 1.4rem;
     font-weight: 800;
-    font-family: var(--font-orbitron);
+    font-family: var(--font-medieval);
     font-size: 0.72rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -166,7 +165,7 @@
     border-radius: 2px;
     padding: 0.6rem 1.4rem;
     font-weight: 800;
-    font-family: var(--font-orbitron);
+    font-family: var(--font-medieval);
     font-size: 0.72rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -192,7 +191,7 @@
     border: 1px solid rgba(0, 255, 255, 0.12);
     border-radius: 2px;
     color: var(--text-primary);
-    font-family: var(--font-grotesk);
+    font-family: var(--font-medieval);
     font-size: 0.875rem;
     padding: 0.75rem 1rem;
     transition: all 0.2s ease;
@@ -327,5 +326,10 @@
   .table-responsive {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Global font overrides */
+  .font-orbitron, .font-grotesk, .font-medieval {
+    font-family: var(--font-medieval) !important;
   }
 }
