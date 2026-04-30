@@ -1,69 +1,71 @@
-# 🛠️ CodeCraft Admin Portal
+# 🛡️ CodeCraft Admin Terminal
 
-The administrative command center for CodeCraft. A high-performance, reactive dashboard built with Vite, React, and TanStack Router, designed for real-time hackathon management and participant oversight.
+![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript)
+![Vite](https://img.shields.io/badge/Vite-8.0-646CFF?style=for-the-badge&logo=vite)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Firebase](https://img.shields.io/badge/Firebase-12.12-FFCA28?style=for-the-badge&logo=firebase)
 
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![TanStack Router](https://img.shields.io/badge/TanStack%20Router-FF4154?style=for-the-badge&logo=tanstack&logoColor=white)
-![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+The **CodeCraft Admin Terminal** is a high-performance command center built for hackathon organizers. It features a bespoke "Cyber-UI" aesthetic with immersive animations, real-time data synchronization, and a robust routing system.
 
 ---
 
-## 📂 Project Structure
+## 🛠️ Tech Stack
 
-| Path | Description |
+- **Core**: React 19 (Functional Components & Hooks)
+- **Routing**: `@tanstack/react-router` (Type-safe routing)
+- **Styling**: Vanilla CSS + TailwindCSS (Cyberpunk theme)
+- **Backend Sync**: Firebase Auth & Firestore + Custom REST API
+- **State Management**: React State & Context
+
+---
+
+## 📂 Repository Structure
+
+| Path | Purpose |
 | :--- | :--- |
-| `src/main.tsx` | Application entry point. |
-| `src/router.tsx` | Centralized route definitions using TanStack Router. |
-| `src/pages/` | High-level page components (Dashboard, Registrations, etc.). |
-| `src/components/` | Reusable UI components and layouts. |
-| `src/lib/` | Utility functions and service initializations (Firebase). |
-| `src/assets/` | Static assets and styling tokens. |
+| `src/pages/` | Core views (Dashboard, Registrations, Teams, etc.) |
+| `src/components/` | Reusable UI components and the main `AdminLayout` |
+| `src/components/ui/` | Atomic UI elements like the `Loader` |
+| `src/lib/` | Utilities for Firebase, cropping, and more |
+| `src/router.tsx` | Centralized type-safe route configuration |
+| `src/index.css` | Global design system and Cyber-UI animations |
 
 ---
 
-## 🛠️ Way of Working (Logic Flow)
+## 🔄 Way of Working (Logic Flow)
 
 ```mermaid
 graph TD
-    A[User Entry] --> B{Auth Check}
-    B -- No --> C[Login Page]
-    B -- Yes --> D[Select Hackathon]
-    D --> E[Admin Layout]
-    E --> F[Dashboard: Metrics]
-    E --> G[Registrations: Management]
-    E --> H[Phases: Architect]
-    E --> I[Organizers: Config]
+    A[User Access] --> B{Authenticated?}
+    B -- No --> C[Firebase Auth Overlay]
+    B -- Yes --> D[Select Hackathon Node]
+    D --> E[Admin Dashboard]
+    E --> F[Module Navigation]
+    F --> G[Registrations]
+    F --> H[Team Matrix]
+    F --> I[Phase Architect]
+    F --> J[Judge Nexus]
 ```
 
 ---
 
-## ⚡ Quick Start
+## 🚀 Getting Started
 
-1. **Install Dependencies**
+1. **Install Dependencies**:
 
    ```bash
    npm install
    ```
 
-2. **Run Development Server**
+2. **Run Dev Environment**:
 
    ```bash
    npm run dev
    ```
 
-3. **Build for Production**
+3. **Build for Production**:
 
    ```bash
    npm run build
    ```
-
----
-
-## 🔑 Key Features
-
-- **Phase Architect**: Customize hackathon phases dynamically.
-- **Real-time Metrics**: Track registrations and submissions via Firebase.
-- **Team Management**: Oversee participant groupings and details.
-- **Asset Handling**: Integrated image cropping and Cloudinary uploads.
