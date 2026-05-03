@@ -13,6 +13,7 @@ type Metric = {
   delta: string
   tone: MetricTone
   icon: React.ReactNode
+  to: string
 }
 
 type PhaseStat = {
@@ -44,6 +45,41 @@ type Hackathon = {
     creatorId: string
     creatorEmail: string
     phases: Phase[]
+    organizers?: Array<{
+        name: string;
+        avatar: string;
+        email?: string;
+    }>;
+    organisers?: Array<{
+        name: string;
+        avatar: string;
+        email?: string;
+    }>;
+    judges?: Array<{
+        email: string;
+        status: string;
+        name?: string;
+        avatar?: string;
+    }>;
+}
+
+interface OrganizerData {
+  name?: string;
+  fullName?: string;
+  displayName?: string;
+  email?: string;
+  contactEmail?: string;
+  avatar?: string;
+  user?: {
+    name?: string;
+    email?: string;
+    avatar?: string;
+  };
+  details?: {
+    name?: string;
+    email?: string;
+    avatar?: string;
+  };
 }
 
 const toneMap: Record<MetricTone, { bar: string; text: string; bg: string; border: string }> = {
@@ -79,8 +115,17 @@ export function DashboardPage() {
         const hData = await hRes.json()
         const rData = await rRes.json()
 
-        if (hRes.ok) setHackathon(hData)
-        else { setHackathon(null); return }
+        if (hRes.ok) {
+          // Ensure organizers and organisers are merged or checked
+          const normalizedHackathon = {
+            ...hData,
+            organizers: hData.organizers || hData.organisers || []
+          }
+          setHackathon(normalizedHackathon)
+        } else {
+          setHackathon(null)
+          return
+        }
         
         if (!Array.isArray(rData)) { setRegistrations([]); return }
 
@@ -123,9 +168,6 @@ export function DashboardPage() {
   }
 
   const total = registrations.length
-  const approved = registrations.filter(r => r.status === 'Approved').length
-  const pending = registrations.filter(r => r.status === 'Pending').length
-  const rejected = registrations.filter(r => r.status === 'Rejected').length
   
   const phaseStats: PhaseStat[] = (hackathon?.phases || []).map(phase => {
     const count = registrations.filter(r => r.responses && r.responses[phase.id]).length
@@ -134,62 +176,75 @@ export function DashboardPage() {
 
   const activeTeams = new Set(registrations.filter(r => r.team !== 'Individual').map(r => r.team)).size
 
+  const totalSubmissions = registrations.filter(r => r.responses && r.responses['phase_3_submissions']).length
+
   const metrics: Metric[] = [
     {
-      label: 'Registrations',
+      label: "Registrations",
       value: String(total),
-      delta: 'Total participants',
-      tone: 'cyan',
+      delta: "Total participants",
+      tone: "cyan",
+      to: "/h/$hackathonId/registrations",
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
-      )
+      ),
     },
     {
-      label: 'Approval Rate',
-      value: `${total > 0 ? Math.round((approved / total) * 100) : 0}%`,
-      delta: `${pending} awaiting review`,
-      tone: 'emerald',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-      )
-    },
-    {
-      label: 'Active Teams',
+      label: "Active Teams",
       value: String(activeTeams),
-      delta: 'Unique squads formed',
-      tone: 'amber',
+      delta: "Unique squads formed",
+      tone: "amber",
+      to: "/h/$hackathonId/teams",
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
         </svg>
-      )
+      ),
     },
     {
-      label: 'Phases',
-      value: String(hackathon?.phases?.length || 0),
-      delta: 'Active routing nodes',
-      tone: 'rose',
+      label: "Submissions",
+      value: String(totalSubmissions),
+      delta: "Projects successfully logged",
+      tone: "rose",
+      to: "/h/$hackathonId/submission",
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          className="icon icon-tabler icons-tabler-filled icon-tabler-automatic-gearbox"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M18 16a3 3 0 0 1 0 6h-1a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1zm0 4l.117 -.007a1 1 0 0 0 -.117 -1.993zm.5 -13a2.5 2.5 0 1 1 0 5h-.5v1a1 1 0 0 1 -.883 .993l-.117 .007a1 1 0 0 1 -1 -1v-5a1 1 0 0 1 1 -1zm-.5 3h.5a.5 .5 0 1 0 0 -1h-.5zm-5 0a1 1 0 0 1 0 2h-3v6h3a1 1 0 0 1 0 2h-3a2 2 0 0 1 -2 -2v-6h-2a2 2 0 0 1 -1.995 -1.85l-.005 -.15v-2.17a3 3 0 0 1 -2 -2.83l.005 -.176a3 3 0 1 1 3.996 3.005l-.001 2.171z" />
         </svg>
-      )
+      ),
     },
-  ]
-
-  const trackCounts = registrations.reduce((acc, r) => {
-    const track = r.track || 'General'
-    acc[track] = (acc[track] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
-  const sortedTracks = Object.entries(trackCounts).sort((a, b) => b[1] - a[1])
-  const soloCount = registrations.filter(r => r.team === 'Individual').length
-  const teamUsersCount = total - soloCount
+  ];
 
   const isCreator = user?.uid === hackathon?.creatorId
 
@@ -217,7 +272,7 @@ export function DashboardPage() {
       {/* Hero Header */}
       <div className="glass-card relative overflow-hidden p-5 sm:p-8 border-cyan-500/20">
         <div className="absolute -right-16 -top-16 h-48 w-48 sm:h-64 sm:w-64 rounded-full bg-cyan-400/8 blur-[80px]" />
-        
+
         <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 sm:gap-8">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -229,17 +284,22 @@ export function DashboardPage() {
               </span>
             </div>
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tighter font-orbitron uppercase leading-none">
-              {hackathon?.title}{' '}
+              {hackathon?.title}{" "}
               <span className="text-cyan-400 text-glow">Dashboard</span>
             </h1>
             <p className="mt-3 text-slate-400 text-xs sm:text-sm font-medium tracking-wide max-w-xl">
-              Global operational intelligence for hackathon lifecycle management.
+              Global operational intelligence for hackathon lifecycle
+              management.
             </p>
           </div>
-
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-            <button 
-              onClick={() => navigate({ to: '/h/$hackathonId/settings', params: { hackathonId } })}
+            <button
+              onClick={() =>
+                navigate({
+                  to: "/h/$hackathonId/phases",
+                  params: { hackathonId },
+                })
+              }
               className="neon-btn-cyan !py-3 !px-6"
             >
               RECONFIGURE PHASES
@@ -249,34 +309,44 @@ export function DashboardPage() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3 w-full">
         {metrics.map((metric) => {
-          const t = toneMap[metric.tone]
+          const t = toneMap[metric.tone];
           return (
-            <article key={metric.label} className={`glass-card p-4 sm:p-6 border-white/5 hover:${t.border} transition-all group`}>
+            <article
+              key={metric.label}
+              onClick={() => navigate({ to: metric.to, params: { hackathonId } } as unknown as Parameters<typeof navigate>[0])}
+              className={`glass-card p-4 sm:p-6 border-white/5 hover:${t.border} transition-all group cursor-pointer hover:bg-white/[0.02] active:scale-[0.98]`}
+            >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
                 <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.25em] text-slate-500 font-orbitron leading-tight pr-2">
                   {metric.label}
                 </p>
-                <span className={`${t.bg} p-1.5 sm:p-2 border ${t.border} ${t.text} shrink-0`}>
+                <span
+                  className={`${t.bg} p-1.5 sm:p-2 border ${t.border} ${t.text} shrink-0`}
+                >
                   {metric.icon}
                 </span>
               </div>
-              <p className={`text-3xl sm:text-5xl font-black text-white font-orbitron tracking-tighter`}>
+              <p
+                className={`text-3xl sm:text-5xl font-black text-white font-orbitron tracking-tighter`}
+              >
                 {metric.value}
               </p>
               <div className="mt-3 flex items-center gap-2">
                 <div className={`h-0.5 w-3 ${t.bar}`} />
-                <p className={`text-[9px] sm:text-[10px] font-bold ${t.text} uppercase tracking-widest font-orbitron`}>
+                <p
+                  className={`text-[9px] sm:text-[10px] font-bold ${t.text} uppercase tracking-widest font-orbitron`}
+                >
                   {metric.delta}
                 </p>
               </div>
             </article>
-          )
+          );
         })}
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-1">
         {/* Phase Synchronization */}
         <section className="glass-card p-5 sm:p-8 border-white/5">
           <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
@@ -285,7 +355,7 @@ export function DashboardPage() {
               Phase Sync
             </h2>
           </div>
-          
+
           <div className="space-y-5">
             {phaseStats.map((phase, idx) => (
               <div key={phase.id}>
@@ -295,14 +365,20 @@ export function DashboardPage() {
                       {idx + 1}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[9px] sm:text-[10px] font-black text-cyan-400 uppercase tracking-wider font-orbitron truncate">{phase.name}</p>
-                      <p className="text-[9px] text-slate-500 font-orbitron">{phase.count} processed</p>
+                      <p className="text-[9px] sm:text-[10px] font-black text-cyan-400 uppercase tracking-wider font-orbitron truncate">
+                        {phase.name}
+                      </p>
+                      <p className="text-[9px] text-slate-500 font-orbitron">
+                        {phase.count} processed
+                      </p>
                     </div>
                   </div>
-                  <p className="text-base sm:text-lg font-black text-white font-orbitron shrink-0 ml-2">{phase.percentage}%</p>
+                  <p className="text-base sm:text-lg font-black text-white font-orbitron shrink-0 ml-2">
+                    {phase.percentage}%
+                  </p>
                 </div>
                 <div className="h-1.5 w-full bg-slate-900 border border-white/5 overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-cyan-400 transition-all duration-1000 ease-out shadow-[0_0_8px_#00ffff]"
                     style={{ width: `${phase.percentage}%` }}
                   />
@@ -310,128 +386,93 @@ export function DashboardPage() {
               </div>
             ))}
             {phaseStats.length === 0 && (
-              <p className="text-slate-600 font-orbitron text-xs italic">No deployment phases configured.</p>
+              <p className="text-slate-600 font-orbitron text-xs italic">
+                No deployment phases configured.
+              </p>
             )}
           </div>
         </section>
+      </div>
 
-        {/* Entity Logistics */}
-        <section className="glass-card p-5 sm:p-8 border-white/5 flex flex-col gap-5">
-          <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+      <div className="grid gap-5 md:grid-cols-2 mt-5">
+        {/* Organizers Section */}
+        <section className="glass-card p-5 sm:p-8 border-white/5">
+          <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
             <div className="h-5 w-1 bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
             <h2 className="text-base sm:text-xl font-black text-white tracking-wider font-orbitron uppercase">
-              Logistics
+              Organizers
             </h2>
           </div>
-
-          {/* Track + Formation */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <div className="p-3 sm:p-4 bg-slate-900/50 border border-white/5 border-l-2 border-l-cyan-400">
-              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest font-orbitron mb-3">Track Split</p>
-              <div className="space-y-2.5">
-                {sortedTracks.slice(0, 3).map(([track, count]) => (
-                  <div key={track}>
-                    <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-cyan-400 mb-1">
-                      <span className="truncate pr-1">{track}</span>
-                      <span className="shrink-0">{count}</span>
+          <div className="space-y-4">
+            {hackathon?.organizers?.map((org: OrganizerData, idx) => (
+              <div key={idx} className="flex items-center gap-4 p-4 bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group">
+                <div className="relative w-12 h-12 shrink-0 border border-white/10 overflow-hidden bg-slate-900 shadow-[0_0_15px_rgba(0,0,0,0.2)]">
+                  {org.avatar ? (
+                    <img 
+                      src={org.avatar} 
+                      alt={org.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-orbitron text-lg font-black text-cyan-400/80 group-hover:text-cyan-400 transition-colors">
+                      {org.name?.charAt(0) || '?'}
                     </div>
-                    <div className="h-0.5 w-full bg-slate-800">
-                      <div className="h-full bg-cyan-500/50" style={{ width: `${(count/total)*100}%` }} />
-                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-black text-white font-orbitron uppercase tracking-[0.2em] mb-0.5 truncate group-hover:text-cyan-400 transition-colors">
+                    {org.name || 'Anonymous Personnel'}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_5px_#00ffff] animate-pulse" />
+                    <p className="text-[10px] text-slate-500 font-mono lowercase tracking-wider truncate">
+                      {org.email || 'no-contact-data'}
+                    </p>
                   </div>
-                ))}
-                {sortedTracks.length === 0 && <p className="text-[10px] text-slate-600 font-mono italic">No data</p>}
-              </div>
-            </div>
-
-            <div className="p-3 sm:p-4 bg-slate-900/50 border border-white/5 border-l-2 border-l-violet-400 flex flex-col justify-center">
-              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest font-orbitron mb-3">Formation</p>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-[9px] text-violet-400 font-mono">Solo</span>
-                  <span className="text-sm font-bold text-white font-orbitron">{soloCount}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[9px] text-violet-400 font-mono">Squads</span>
-                  <span className="text-sm font-bold text-white font-orbitron">{teamUsersCount}</span>
-                </div>
-                <div className="mt-2 h-1 w-full bg-slate-800 flex">
-                  <div className="h-full bg-violet-400" style={{ width: `${total ? (soloCount/total)*100 : 0}%` }} />
-                  <div className="h-full bg-violet-600" style={{ width: `${total ? (teamUsersCount/total)*100 : 0}%` }} />
                 </div>
               </div>
-            </div>
+            ))}
+            {(!hackathon?.organizers || hackathon.organizers.length === 0) && (
+              <div className="p-10 border border-dashed border-white/5 flex flex-col items-center justify-center opacity-30">
+                <p className="text-slate-600 font-orbitron text-[9px] uppercase tracking-[0.3em] italic text-center">No Command Personnel Detected</p>
+              </div>
+            )}
           </div>
+        </section>
 
-          {/* Validation Spread */}
-          <div className="p-3 sm:p-4 border border-white/5 bg-black/20">
-            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest font-orbitron mb-3">Validation Spread</p>
-            <div className="relative h-2 bg-slate-900 border border-white/5 flex overflow-hidden rounded-full">
-              <div className="h-full bg-emerald-500 shadow-[0_0_8px_#10b981]" style={{ width: `${total > 0 ? (approved/total)*100 : 0}%` }} />
-              <div className="h-full bg-amber-500 shadow-[0_0_8px_#f59e0b]" style={{ width: `${total > 0 ? (pending/total)*100 : 0}%` }} />
-              <div className="h-full bg-rose-500" style={{ width: `${total > 0 ? (rejected/total)*100 : 0}%` }} />
-            </div>
-            <div className="flex flex-wrap justify-between mt-2 gap-2 text-[9px] font-bold text-slate-400 font-orbitron uppercase tracking-widest">
-              <span className="text-emerald-400">{approved} Approved</span>
-              <span className="text-amber-400">{pending} Pending</span>
-              <span className="text-rose-400">{rejected} Rejected</span>
-            </div>
+        {/* Judges Section */}
+        <section className="glass-card p-5 sm:p-8 border-white/5">
+          <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
+            <div className="h-5 w-1 bg-rose-400 shadow-[0_0_8px_#f43f5e]" />
+            <h2 className="text-base sm:text-xl font-black text-white tracking-wider font-orbitron uppercase">
+              Judges
+            </h2>
+          </div>
+          <div className="space-y-4">
+            {hackathon?.judges?.map((judge, idx) => (
+              <div key={idx} className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/5">
+                <div className="w-10 h-10 border border-white/10 flex items-center justify-center bg-slate-800">
+                  {judge.avatar ? (
+                    <img src={judge.avatar} alt={judge.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-orbitron text-slate-500">JDG</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-white font-orbitron uppercase tracking-wider truncate">{judge.name || judge.email}</p>
+                  <p className="text-[10px] text-slate-500 font-mono lowercase">{judge.email}</p>
+                </div>
+                <div className={`px-2 py-0.5 text-[8px] font-bold font-orbitron uppercase tracking-widest border ${judge.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                  {judge.status}
+                </div>
+              </div>
+            ))}
+            {(!hackathon?.judges || hackathon.judges.length === 0) && (
+              <p className="text-slate-600 font-orbitron text-xs italic">No judges assigned.</p>
+            )}
           </div>
         </section>
       </div>
-
-      {/* Live Feed + Quick Actions */}
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2 glass-card border-white/5 flex flex-col overflow-hidden">
-          <div className="p-3 sm:p-4 border-b border-white/5 bg-slate-900/50 flex justify-between items-center">
-            <h3 className="text-xs sm:text-sm font-black text-white font-orbitron tracking-[0.2em] uppercase flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#00ffff]" />
-              Live Terminal
-            </h3>
-            <span className="text-[9px] text-cyan-400/50 font-mono uppercase">{registrations.length} signatures</span>
-          </div>
-          <div className="flex-1 bg-black/40 p-3 sm:p-4 font-mono text-[9px] sm:text-[10px] space-y-2 overflow-y-auto max-h-[220px]">
-            {registrations.slice(0, 10).map((reg, idx) => (
-              <div key={reg.uid} className="flex gap-2 sm:gap-3 text-slate-400 border-l-2 border-cyan-500/30 pl-2 animate-fade-up" style={{ animationDelay: `${idx * 0.08}s`, animationFillMode: 'both' }}>
-                <span className="text-cyan-500/50 shrink-0">[{new Date().toISOString().split('T')[1].slice(0,8)}]</span>
-                <span className="text-amber-400 shrink-0">[AUTH]</span>
-                <span className="truncate">
-                  <span className="text-white">'{reg.name}'</span>{' '}
-                  <span className="text-slate-500 hidden sm:inline">→ {reg.team}</span>
-                </span>
-              </div>
-            ))}
-            {registrations.length === 0 && (
-              <div className="text-cyan-500/50 animate-pulse italic">Waiting for inbound connections...</div>
-            )}
-            <div className="flex gap-3 text-cyan-400 pl-2 mt-3">
-              <span className="shrink-0">[{new Date().toISOString().split('T')[1].slice(0,8)}]</span>
-              <span className="animate-pulse">_</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Control Nexus */}
-        <div className="glass-card p-5 sm:p-6 border-white/5 bg-cyan-500/[0.02]">
-          <h3 className="text-xs sm:text-sm font-black text-white font-orbitron tracking-[0.2em] mb-5 uppercase">Control Nexus</h3>
-          <div className="space-y-3">
-            {[
-              { label: 'Open Registry', sub: 'Manual entity validation', to: '/h/$hackathonId/registrations' },
-              { label: 'Team Matrix', sub: 'Coordinate squad deployments', to: '/h/$hackathonId/teams' },
-              { label: 'Submissions', sub: 'Audit project deliverables', to: '/h/$hackathonId/submission' },
-            ].map(item => (
-              <button
-                key={item.label}
-                onClick={() => navigate({ to: item.to as string, params: { hackathonId } as Record<string, string> })}
-                className="w-full text-left p-3 sm:p-4 border border-white/5 hover:border-cyan-400/40 hover:bg-cyan-500/5 transition-all group"
-              >
-                <p className="text-[10px] font-black text-cyan-400 font-orbitron uppercase tracking-widest">{item.label}</p>
-                <p className="text-[9px] text-slate-500 font-orbitron mt-0.5">{item.sub}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
     </section>
-  )
+  );
 }

@@ -113,9 +113,6 @@ export function RegistrationsPage() {
     return matchesSearch && matchesStatus
   })
 
-  const pendingCount = data.filter(u => u.status === 'Pending').length
-  const approvedCount = data.filter(u => u.status === 'Approved' || u.status === 'Done').length
-
   return (
     <section className="space-y-5 pb-16">
       {/* Header */}
@@ -135,26 +132,6 @@ export function RegistrationsPage() {
           Manage and review participant enrollment across the arena.
         </p>
       </header>
-
-      {/* Stats */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-2">
-        <article className="glass-card p-4 sm:p-6 border-cyan-500/10 hover:border-cyan-500/30 transition-all">
-          <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500 font-orbitron">Queue Size</p>
-          <p className="mt-2 sm:mt-3 text-3xl sm:text-5xl font-black text-white font-orbitron">{data.length}</p>
-          <div className="mt-3 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 bg-orange-500 animate-pulse shadow-[0_0_5px_#ff7300]" />
-            <p className="text-[9px] sm:text-[10px] font-bold text-orange-400 uppercase tracking-widest">{pendingCount} need validation</p>
-          </div>
-        </article>
-        <article className="glass-card p-4 sm:p-6 border-cyan-500/10 hover:border-cyan-500/30 transition-all">
-          <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500 font-orbitron">Approved</p>
-          <p className="mt-2 sm:mt-3 text-3xl sm:text-5xl font-black text-white font-orbitron">{approvedCount}</p>
-          <div className="mt-3 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_5px_#00ffff]" />
-            <p className="text-[9px] sm:text-[10px] font-bold text-cyan-400 uppercase tracking-widest">In the arena</p>
-          </div>
-        </article>
-      </div>
 
       {/* Table Card */}
       <article className="glass-card border-cyan-500/10 overflow-hidden">

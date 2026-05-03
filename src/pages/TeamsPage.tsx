@@ -27,6 +27,7 @@ export function TeamsPage() {
   const { hackathonId } = useParams({ from: '/h/$hackathonId' })
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const [hackathonData, setHackathonData] = useState<Hackathon | null>(null)
 
@@ -99,6 +100,11 @@ export function TeamsPage() {
     fetchTeams()
   }, [hackathonId])
 
+  const filteredTeams = teams.filter(team => 
+    team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    team.track.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
   return (
     <section className="space-y-5 pb-16">
       <header className="glass-card p-5 sm:p-8 border-cyan-500/20">
@@ -119,9 +125,24 @@ export function TeamsPage() {
       </header>
 
       <article className="glass-card border-cyan-500/10 overflow-hidden">
-        <div className="p-4 sm:p-6 border-b border-cyan-500/10 flex items-center gap-3">
-          <div className="h-5 w-1 bg-cyan-400 shadow-[0_0_10px_#00ffff]" />
-          <h2 className="text-base sm:text-xl font-black text-white tracking-wider font-orbitron">Active Squads</h2>
+        <div className="p-4 sm:p-6 border-b border-cyan-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-1 bg-cyan-400 shadow-[0_0_10px_#00ffff]" />
+            <h2 className="text-base sm:text-xl font-black text-white tracking-wider font-orbitron">Active Squads</h2>
+          </div>
+
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="SEARCH SQUADS..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="bg-slate-900 border border-cyan-500/20 pl-8 pr-4 py-2 text-[10px] font-orbitron tracking-widest text-cyan-400 focus:border-cyan-400 outline-none w-full sm:w-52"
+            />
+          </div>
         </div>
 
         <div className="soft-scrollbar overflow-x-auto">
@@ -147,7 +168,7 @@ export function TeamsPage() {
                   </td>
                 </tr>
               ) : (
-                teams.map((team) => (
+                filteredTeams.map((team) => (
                   <tr key={team.name} className="group hover:bg-cyan-500/[0.02] transition-colors relative">
                     <td className="py-5 px-4 text-[10px] font-bold text-cyan-400 font-orbitron tracking-widest">
                       {team.name}
