@@ -27,6 +27,7 @@ The **CodeCraft Admin Terminal** is a high-performance command center built for 
 | `src/pages/` | Core views (Dashboard, Registrations, Teams, etc.) |
 | `src/components/` | Reusable UI components and the main `AdminLayout` |
 | `src/components/ui/` | Atomic UI elements like the `Loader` |
+| `src/assets/` | Static media assets and vector graphics |
 | `src/lib/` | Utilities for Firebase, cropping, and more |
 | `src/router.tsx` | Centralized type-safe route configuration |
 | `src/index.css` | Global design system and Cyber-UI animations |
