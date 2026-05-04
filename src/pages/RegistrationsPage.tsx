@@ -392,6 +392,9 @@ export function RegistrationsPage() {
                         <p className="text-xs font-bold text-slate-400 tracking-wide uppercase font-orbitron">{row.team}</p>
                       </td>
                       <td className="py-4 px-4">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">{row.track}</p>
+                      </td>
+                      <td className="py-4 px-4">
                         {row.attendance ? (
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase border border-emerald-400/20 text-emerald-400 bg-emerald-400/5">
                             <span className="h-1 w-1 rounded-full bg-emerald-400 shadow-[0_0_5px_#10b981]" />
@@ -410,6 +413,17 @@ export function RegistrationsPage() {
                         ) : (
                           <span className="text-[9px] font-bold text-slate-600 tracking-widest uppercase font-orbitron">PENDING</span>
                         )}
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center justify-center gap-1">
+                          {row.phases.map((done, idx) => (
+                            <div 
+                              key={idx} 
+                              className={`h-1.5 w-1.5 rounded-full ${done ? 'bg-cyan-400 shadow-[0_0_5px_#00ffff]' : 'bg-slate-800'}`}
+                              title={`Phase ${idx + 1}: ${done ? 'Completed' : 'Pending'}`}
+                            />
+                          ))}
+                        </div>
                       </td>
                     </tr>
                   )
