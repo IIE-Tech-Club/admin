@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import Loader from '../components/ui/Loader'
+import QRScanner from '../components/QRScanner'
+import { Toaster, toast } from 'sonner'
 
 export type RegistrationStatus = 'Pending' | 'Approved' | 'Rejected' | 'Done'
 
@@ -16,6 +18,8 @@ export type Registration = {
   phases: boolean[]
   responses: Record<string, unknown>
   registrationData: Record<string, unknown>
+  attendance?: boolean
+  food?: boolean
 }
 
 interface Hackathon {
@@ -30,14 +34,11 @@ interface RegistrationResponse {
   status?: RegistrationStatus
   user?: { name?: string; email?: string }
   responses: Record<string, unknown>
+  attendance?: boolean
+  food?: boolean
 }
 
-const statusStyles: Record<RegistrationStatus, { text: string; border: string; bg: string; dot: string }> = {
-  Approved: { text: 'text-emerald-400', border: 'border-emerald-400/20', bg: 'bg-emerald-400/5', dot: 'bg-emerald-400 shadow-[0_0_5px_#10b981]' },
-  Done:     { text: 'text-cyan-400',    border: 'border-cyan-400/20',    bg: 'bg-cyan-400/5',    dot: 'bg-cyan-400 shadow-[0_0_5px_#00ffff]' },
-  Rejected: { text: 'text-rose-400',   border: 'border-rose-400/20',   bg: 'bg-rose-400/5',   dot: 'bg-rose-400' },
-  Pending:  { text: 'text-amber-400',  border: 'border-amber-400/20',  bg: 'bg-amber-400/5',  dot: 'bg-amber-400 animate-pulse' },
-}
+
 
 export function RegistrationsPage() {
   const { hackathonId } = useParams({ from: '/h/$hackathonId' })
@@ -46,7 +47,69 @@ export function RegistrationsPage() {
   const [hackathonData, setHackathonData] = useState<Hackathon | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('All')
+  const [showScanner, setShowScanner] = useState(false)
+  const [scanMode, setScanMode] = useState<'attendance' | 'food' | null>(null)
+  const [showModeSelection, setShowModeSelection] = useState(false)
+  const [lastScanned, setLastScanned] = useState<{ id: string; time: number } | null>(null)
   const navigate = useNavigate()
+
+  const handleScan = async (decodedText: string) => {
+    // Expected URL: https://participant-dashboard.vercel.app/[userUID]/profile
+    const match = decodedText.match(/https:\/\/participant-dashboard\.vercel\.app\/([^/]+)\/profile/)
+    const userUID = match ? match[1] : decodedText 
+
+    if (userUID) {
+      // Prevent duplicate rapid scans (within 3 seconds)
+      if (lastScanned && lastScanned.id === userUID && Date.now() - lastScanned.time < 3000) {
+        return
+      }
+
+      const userExists = data.find(reg => reg.mongoId === userUID || reg.id === userUID)
+      
+      if (userExists) {
+        // Check if already marked to avoid redundant updates
+        if (userExists[scanMode!]) {
+          toast.info(`${userExists.participant} already marked for ${scanMode}`, {
+            style: { background: '#0f172a', border: '1px solid rgba(6, 182, 212, 0.3)', color: '#22d3ee' }
+          })
+          setLastScanned({ id: userUID, time: Date.now() })
+          return
+        }
+
+        // Update local state
+        setData(prev => prev.map(reg => {
+          if (reg.mongoId === userUID || reg.id === userUID) {
+            return { ...reg, [scanMode!]: true }
+          }
+          return reg
+        }))
+        
+        setLastScanned({ id: userUID, time: Date.now() })
+
+        // Update backend
+        try {
+          fetch(`${import.meta.env.VITE_API_URL}/registrations/${userExists.mongoId}/mark`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: scanMode })
+          })
+        } catch (error) {
+          console.error(`Failed to update ${scanMode} on server:`, error)
+        }
+
+        toast.success(scanMode === 'attendance' ? 'Attendance marked' : 'Food issued', {
+          description: `Entity: ${userExists.participant}`,
+          style: { background: '#0f172a', border: '1px solid rgba(34, 197, 94, 0.3)', color: '#4ade80' }
+        })
+      } else {
+        setLastScanned({ id: userUID, time: Date.now() })
+        toast.error('User not present', {
+          description: 'UID not found in registry manifest.',
+          style: { background: '#0f172a', border: '1px solid rgba(244, 63, 94, 0.3)', color: '#fb7185' }
+        })
+      }
+    }
+  }
 
   useEffect(() => {
     const fetchRegistrations = async () => {
@@ -115,23 +178,83 @@ export function RegistrationsPage() {
 
   return (
     <section className="space-y-5 pb-16">
+      <Toaster position="top-right" theme="dark" />
       {/* Header */}
-      <header className="glass-card p-5 sm:p-8 border-cyan-500/20">
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 font-orbitron mb-2">
-          Identity Management
-        </p>
-        <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight font-orbitron">
-          Registry <span className="text-cyan-400 text-glow">Manifest</span>
-        </h1>
-        {hackathonData && (
-          <p className="mt-1 text-[10px] text-slate-500 font-mono tracking-widest">
-            NODE: {hackathonData.title.toUpperCase()}
+      <header className="glass-card p-5 sm:p-8 border-cyan-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden">
+        {/* Decorative background element */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-3xl -mr-16 -mt-16 pointer-events-none" />
+        
+        <div className="flex-1">
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400 font-orbitron mb-2">
+            Identity Management
           </p>
-        )}
-        <p className="mt-3 text-xs sm:text-sm text-slate-400 font-medium tracking-wide">
-          Manage and review participant enrollment across the arena.
-        </p>
+          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight font-orbitron">
+            Registry <span className="text-cyan-400 text-glow">Manifest</span>
+          </h1>
+          {hackathonData && (
+            <p className="mt-1 text-[10px] text-slate-500 font-mono tracking-widest">
+              NODE: {hackathonData.title.toUpperCase()}
+            </p>
+          )}
+          <p className="mt-3 text-xs sm:text-sm text-slate-400 font-medium tracking-wide max-w-2xl">
+            Manage and review participant enrollment across the arena. Use the scanner for rapid identification.
+          </p>
+        </div>
+
+        <button 
+          onClick={() => setShowModeSelection(true)}
+          className="group relative flex items-center gap-3 px-6 py-3 bg-cyan-500/5 border border-cyan-500/20 hover:border-cyan-400/50 transition-all duration-300"
+        >
+          <div className="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative flex items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cyan-400 group-hover:scale-110 transition-transform">
+              <path d="M3 7V5a2 2 0 0 1 2-2h2m14 4V5a2 2 0 0 0-2-2h-2m-14 14v2a2 2 0 0 0 2 2h2m14-4v2a2 2 0 0 1-2 2h-2M7 12h10M12 7v10"/>
+            </svg>
+            <span className="font-orbitron text-[10px] font-black tracking-[0.2em] text-white group-hover:text-cyan-400 transition-colors uppercase">Execute Scan</span>
+          </div>
+          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_#00ffff]" />
+        </button>
       </header>
+
+      {/* Mode Selection Modal */}
+      {showModeSelection && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+          <div className="glass-card border-cyan-500/30 p-8 max-w-sm w-full text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyan-400" />
+            <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-cyan-400" />
+            
+            <h3 className="font-orbitron text-white text-sm tracking-[0.3em] uppercase mb-6">Select Scan Protocol</h3>
+            
+            <div className="space-y-3">
+              <button 
+                onClick={() => { setScanMode('attendance'); setShowModeSelection(false); setShowScanner(true); }}
+                className="w-full py-4 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-orbitron text-[10px] tracking-widest hover:bg-cyan-500/20 transition-all uppercase"
+              >
+                Attendance Check
+              </button>
+              <button 
+                onClick={() => { setScanMode('food'); setShowModeSelection(false); setShowScanner(true); }}
+                className="w-full py-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-orbitron text-[10px] tracking-widest hover:bg-emerald-500/20 transition-all uppercase"
+              >
+                Food Distribution
+              </button>
+              <button 
+                onClick={() => setShowModeSelection(false)}
+                className="w-full py-2 text-slate-500 font-orbitron text-[8px] tracking-widest hover:text-white transition-all uppercase mt-4"
+              >
+                Cancel Operation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showScanner && (
+        <QRScanner 
+          onScan={handleScan} 
+          onClose={() => { setShowScanner(false); setScanMode(null); }} 
+        />
+      )}
 
       {/* Table Card */}
       <article className="glass-card border-cyan-500/10 overflow-hidden">
@@ -178,7 +301,8 @@ export function RegistrationsPage() {
                 <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">UID</th>
                 <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Participant</th>
                 <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Squad</th>
-                <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Status</th>
+                <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Attendance</th>
+                <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Food</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -196,7 +320,6 @@ export function RegistrationsPage() {
                 </tr>
               ) : (
                 filteredData.map((row) => {
-                  const s = statusStyles[row.status]
                   return (
                     <tr
                       key={row.mongoId}
@@ -212,10 +335,24 @@ export function RegistrationsPage() {
                         <p className="text-xs font-bold text-slate-400 tracking-wide uppercase font-orbitron">{row.team}</p>
                       </td>
                       <td className="py-4 px-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase border ${s.text} ${s.border} ${s.bg}`}>
-                          <span className={`h-1 w-1 rounded-full ${s.dot}`} />
-                          {row.status}
-                        </span>
+                        {row.attendance ? (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase border border-emerald-400/20 text-emerald-400 bg-emerald-400/5">
+                            <span className="h-1 w-1 rounded-full bg-emerald-400 shadow-[0_0_5px_#10b981]" />
+                            MARKED
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold text-slate-600 tracking-widest uppercase font-orbitron">ABSENT</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4">
+                        {row.food ? (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase border border-cyan-400/20 text-cyan-400 bg-cyan-400/5">
+                            <span className="h-1 w-1 rounded-full bg-cyan-400 shadow-[0_0_5px_#00ffff]" />
+                            ISSUED
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold text-slate-600 tracking-widest uppercase font-orbitron">PENDING</span>
+                        )}
                       </td>
                     </tr>
                   )
@@ -237,7 +374,6 @@ export function RegistrationsPage() {
             </div>
           ) : (
             filteredData.map((row) => {
-              const s = statusStyles[row.status]
               return (
                 <div
                   key={row.mongoId}
@@ -253,10 +389,24 @@ export function RegistrationsPage() {
                         <span className="text-[9px] text-slate-600 font-mono truncate">{row.team}</span>
                       </div>
                     </div>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase border shrink-0 ${s.text} ${s.border} ${s.bg}`}>
-                      <span className={`h-1 w-1 rounded-full ${s.dot}`} />
-                      {row.status}
-                    </span>
+                    <div className="flex flex-col gap-1.5 items-end shrink-0">
+                      {row.attendance ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[8px] font-bold tracking-widest uppercase border border-emerald-400/20 text-emerald-400 bg-emerald-400/5">
+                          <span className="h-1 w-1 rounded-full bg-emerald-400 shadow-[0_0_5px_#10b981]" />
+                          ATT
+                        </span>
+                      ) : (
+                        <span className="text-[8px] font-bold text-slate-600 tracking-widest uppercase font-orbitron">NO ATT</span>
+                      )}
+                      {row.food ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[8px] font-bold tracking-widest uppercase border border-cyan-400/20 text-cyan-400 bg-cyan-400/5">
+                          <span className="h-1 w-1 rounded-full bg-cyan-400 shadow-[0_0_5px_#00ffff]" />
+                          FOOD
+                        </span>
+                      ) : (
+                        <span className="text-[8px] font-bold text-slate-600 tracking-widest uppercase font-orbitron">NO FOOD</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )
