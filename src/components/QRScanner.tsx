@@ -10,35 +10,36 @@ const QRScanner = ({ onScan, onClose }: QRScannerProps) => {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
   useEffect(() => {
-    // Timeout to ensure the DOM element is ready
+    let scanner: Html5QrcodeScanner | null = null;
     const timer = setTimeout(() => {
-      const scanner = new Html5QrcodeScanner(
+      const newScanner = new Html5QrcodeScanner(
         'qr-reader',
         { 
           fps: 10, 
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0
         },
-        /* verbose= */ false
+        false
       );
 
-      scanner.render(
+      newScanner.render(
         (decodedText) => {
           onScan(decodedText);
-          // Removed scanner.clear() to allow continuous scanning
         },
         () => {
           // silent error for scan failures
         }
       );
 
-      scannerRef.current = scanner;
+      scanner = newScanner;
+      scannerRef.current = newScanner;
     }, 100);
 
     return () => {
       clearTimeout(timer);
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(e => console.error("Failed to clear scanner", e));
+      if (scanner) {
+        scanner.clear().catch(e => console.error("Failed to clear scanner", e));
+        scannerRef.current = null;
       }
     };
   }, [onScan]);

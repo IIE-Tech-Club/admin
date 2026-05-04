@@ -8,7 +8,6 @@ export type RegistrationStatus = 'Pending' | 'Approved' | 'Rejected' | 'Done'
 
 export type Registration = {
   mongoId: string
-  id: string
   participant: string
   email: string
   team: string
@@ -20,6 +19,7 @@ export type Registration = {
   registrationData: Record<string, unknown>
   attendance?: boolean
   food?: boolean
+  firebaseUid?: string
 }
 
 interface Hackathon {
@@ -32,7 +32,7 @@ interface RegistrationResponse {
   _id: string
   registrationDate: string
   status?: RegistrationStatus
-  user?: { name?: string; email?: string }
+  user?: { name?: string; email?: string; uid?: string }
   responses: Record<string, unknown>
   attendance?: boolean
   food?: boolean
@@ -64,7 +64,8 @@ export function RegistrationsPage() {
         return
       }
 
-      const userExists = data.find(reg => reg.mongoId === userUID || reg.id === userUID)
+      // Validate against Firebase UID
+      const userExists = data.find(reg => reg.firebaseUid === userUID)
       
       if (userExists) {
         // Check if already marked to avoid redundant updates
@@ -78,7 +79,7 @@ export function RegistrationsPage() {
 
         // Update local state
         setData(prev => prev.map(reg => {
-          if (reg.mongoId === userUID || reg.id === userUID) {
+          if (reg.firebaseUid === userUID) {
             return { ...reg, [scanMode!]: true }
           }
           return reg
@@ -88,7 +89,7 @@ export function RegistrationsPage() {
 
         // Update backend
         try {
-          fetch(`${import.meta.env.VITE_API_URL}/registrations/${userExists.mongoId}/mark`, {
+          fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}/mark/${userUID}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ type: scanMode })
@@ -143,7 +144,6 @@ export function RegistrationsPage() {
 
           return {
             mongoId: reg._id,
-            id: reg._id.substring(reg._id.length - 8).toUpperCase(),
             participant: name,
             email,
             team,
@@ -153,6 +153,9 @@ export function RegistrationsPage() {
             phases: phases.map((p: { id: string }) => responses[p.id] !== undefined),
             responses,
             registrationData,
+            attendance: reg.attendance || false,
+            food: reg.food || false,
+            firebaseUid: reg.user?.uid,
           }
         })
 
@@ -171,7 +174,7 @@ export function RegistrationsPage() {
     const matchesSearch =
       item.participant.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.firebaseUid?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'All' || item.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -321,12 +324,12 @@ export function RegistrationsPage() {
               ) : (
                 filteredData.map((row) => {
                   return (
-                    <tr
-                      key={row.mongoId}
-                      onClick={() => navigate({ to: '/h/$hackathonId/registrations/$registrationId', params: { hackathonId, registrationId: row.mongoId } })}
+                    <tr 
+                      key={row.firebaseUid}
+                      onClick={() => navigate({ to: '/h/$hackathonId/registrations/$registrationId', params: { hackathonId, registrationId: row.firebaseUid || row.mongoId } })}
                       className="group hover:bg-cyan-500/[0.04] transition-all cursor-pointer"
                     >
-                      <td className="py-4 px-4 text-[10px] font-bold text-cyan-400 font-orbitron tracking-widest">{row.id}</td>
+                      <td className="py-4 px-4 text-[10px] font-bold text-cyan-400 font-orbitron tracking-widest truncate max-w-[150px]">{row.firebaseUid || 'N/A'}</td>
                       <td className="py-4 px-4">
                         <p className="text-xs font-black text-white uppercase tracking-widest font-orbitron group-hover:text-cyan-400 transition-colors">{row.participant}</p>
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{row.email}</p>
@@ -385,7 +388,7 @@ export function RegistrationsPage() {
                       <p className="text-xs font-black text-white uppercase tracking-wide font-orbitron truncate">{row.participant}</p>
                       <p className="text-[10px] text-slate-500 mt-0.5 truncate">{row.email}</p>
                       <div className="flex items-center gap-3 mt-2">
-                        <span className="text-[9px] text-cyan-400/60 font-orbitron font-bold">{row.id}</span>
+                        <span className="text-[9px] text-cyan-400/60 font-orbitron font-bold truncate max-w-[80px]">{row.firebaseUid || 'N/A'}</span>
                         <span className="text-[9px] text-slate-600 font-mono truncate">{row.team}</span>
                       </div>
                     </div>
