@@ -9,6 +9,7 @@ import {
 } from "../lib/firebase";
 import type { User } from "../lib/firebase";
 import Loader from "../components/ui/Loader";
+import CircuitBackground from "../components/ui/CircuitBackground";
 
 type Hackathon = {
   id: string;
@@ -171,11 +172,16 @@ export function SelectHackathonPage() {
       : "";
 
     try {
+      const idToken = await currentUser.getIdToken();
+      const headers: HeadersInit = { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${idToken}`
+      };
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/hackathons`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             id: newHackathon.title.toLowerCase().replace(/\s+/g, "-"),
             title: newHackathon.title,
@@ -273,13 +279,9 @@ export function SelectHackathonPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-orbitron px-4 py-6 sm:p-8 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.05),transparent_70%)]" />
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-cyan-500/10 blur-[120px] rounded-full" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-orange-500/10 blur-[120px] rounded-full" />
-      </div>
+    <div className="min-h-screen bg-transparent text-white font-orbitron px-4 py-6 sm:p-8 relative overflow-hidden">
+      {/* Unified Circuit Background */}
+      <CircuitBackground opacity={0.8} />
 
       <div className="max-w-6xl mx-auto relative z-10">
         <header className="mb-8 sm:mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-white/10 pb-6 sm:pb-8 gap-5">

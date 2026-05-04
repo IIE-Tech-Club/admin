@@ -1,25 +1,12 @@
 import { Link } from '@tanstack/react-router'
+import CircuitBackground from '../components/ui/CircuitBackground'
 
 export const NotFoundPage = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center p-5 bg-[#020408] relative overflow-hidden">
-      {/* Background FX */}
-      <div className="scanline-overlay" />
-      <div className="tech-grid" />
-      
-      <div className="circuit-bg">
-        {[...Array(6)].map((_, i) => (
-          <div 
-            key={i} 
-            className="circuit-line" 
-            style={{ 
-              left: `${i * 20}%`, 
-              animationDelay: `${(i * 1.5) % 6}s`,
-              opacity: 0.3 
-            }} 
-          />
-        ))}
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-5 bg-transparent relative overflow-hidden">
+      {/* Unified Circuit Background */}
+      <CircuitBackground opacity={0.3} />
+      <div className="scanline-overlay" aria-hidden="true" />
 
       <div className="w-full max-w-lg text-center relative z-10 animate-fade-up py-12">
         {/* 404 display */}

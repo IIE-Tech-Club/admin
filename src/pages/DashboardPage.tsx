@@ -107,10 +107,13 @@ export function DashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const idToken = await user?.getIdToken();
+        const headers: HeadersInit = idToken ? { 'Authorization': `Bearer ${idToken}` } : {};
+
         const [hRes, rRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`),
-          fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`)
-        ])
+          fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`, { headers })
+        ]);
         
         const hData = await hRes.json()
         const rData = await rRes.json()
@@ -157,7 +160,7 @@ export function DashboardPage() {
       }
     }
     fetchData()
-  }, [hackathonId])
+  }, [hackathonId, user])
 
   if (loading) {
     return (

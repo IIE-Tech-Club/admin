@@ -13,22 +13,7 @@ import {
 } from "../lib/firebase";
 import type { User } from "../lib/firebase";
 import Loader from "./ui/Loader";
-
-// ✅ DEFINE DECORATIVE CONSTANTS OUTSIDE COMPONENT
-// This is the optimal fix for both 'impure function' and 'cascading render' warnings.
-// It ensures values are generated once at module load, not during React lifecycles.
-const BACKGROUND_PARTICLES = [...Array(30)].map(() => ({
-  left: `${Math.random() * 100}%`,
-  delay: `${Math.random() * 15}s`,
-  duration: `${10 + Math.random() * 10}s`,
-  opacity: Math.random() * 0.4 + 0.1,
-}));
-
-const BACKGROUND_CIRCUITS = [...Array(12)].map(() => ({
-  left: `${Math.random() * 100}%`,
-  delay: `${Math.random() * 8}s`,
-  duration: `${6 + Math.random() * 4}s`,
-}));
+import CircuitBackground from "./ui/CircuitBackground";
 
 interface Hackathon {
   id: string;
@@ -330,9 +315,12 @@ export function AdminLayout() {
   useEffect(() => {
     const fetchDashboardStats = async () => {
       try {
+        const idToken = await user?.getIdToken();
+        const headers: HeadersInit = idToken ? { 'Authorization': `Bearer ${idToken}` } : {};
+
         const [hRes, rRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`),
-          fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`),
+          fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`, { headers }),
         ]);
 
         if (hRes.ok) {
@@ -368,7 +356,7 @@ export function AdminLayout() {
       }
     };
     fetchDashboardStats();
-  }, [hackathonId, setStats, setLoading]);
+  }, [hackathonId, setStats, setLoading, user]);
 
   const handleLogin = async () => {
     try {
@@ -507,13 +495,32 @@ export function AdminLayout() {
             This node is protected. Only the designated creator may modify parameters for{" "}
             <span className="text-white">"{hackathon.title}"</span>.
           </p>
-          <div className="p-3 bg-slate-900/50 border border-white/5 mb-6">
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Authenticated As</p>
-            <p className="text-xs text-cyan-400 font-bold truncate">{user.email}</p>
+          
+          <div className="grid gap-4 mb-8">
+            <div className="p-4 bg-slate-900/50 border border-white/5 text-left">
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Your Identity (UID)</p>
+              <p className="text-xs text-cyan-400 font-mono font-bold break-all">{user.uid}</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-2">Email</p>
+              <p className="text-xs text-white/70 truncate">{user.email}</p>
+            </div>
+            
+            <div className="p-4 bg-red-500/5 border border-red-500/20 text-left">
+              <p className="text-[10px] text-red-400/60 uppercase tracking-widest mb-1">Required Creator ID</p>
+              <p className="text-xs text-red-400 font-mono font-bold break-all">{hackathon.creatorId}</p>
+            </div>
           </div>
-          <Link to="/" className="w-full neon-btn-outline block text-center">
-            Return to Node Selection
-          </Link>
+
+          <div className="flex flex-col gap-3">
+            <button 
+              onClick={() => auth.signOut()}
+              className="w-full neon-btn-outline block text-center"
+            >
+              SWITCH IDENTITY
+            </button>
+            <Link to="/" className="w-full text-[10px] text-slate-500 hover:text-white transition-colors uppercase tracking-[0.3em] font-black py-2">
+              Return to Node Selection
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -521,37 +528,9 @@ export function AdminLayout() {
 
 
   return (
-    <div className="min-h-screen bg-slate-950 text-[#e0f7ff] font-grotesk">
-      {/* Background Effects */}
-      <div className="tech-grid" aria-hidden="true" />
-      <div className="particles-container" aria-hidden="true">
-        {BACKGROUND_PARTICLES.map((p, i) => (
-          <div
-            key={`particle-${i}`}
-            className="particle"
-            style={{
-              left: p.left,
-              animationDelay: p.delay,
-              animationDuration: p.duration,
-              opacity: p.opacity,
-            }}
-          />
-        ))}
-      </div>
-      <div className="circuit-bg" aria-hidden="true">
-        {BACKGROUND_CIRCUITS.map((c, i) => (
-          <div
-            key={`circuit-${i}`}
-            className="circuit-line"
-            style={{
-              left: c.left,
-              animationDelay: c.delay,
-              animationDuration: c.duration,
-            }}
-          />
-        ))}
-      </div>
-      <div className="scanline-overlay" aria-hidden="true" />
+    <div className="min-h-screen bg-transparent text-[#e0f7ff] font-grotesk">
+      {/* Unified Circuit Background */}
+      <CircuitBackground opacity={0.8} />
 
       {/* Mobile Drawer Overlay */}
       {drawerOpen && (

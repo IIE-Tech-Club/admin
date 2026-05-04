@@ -8,6 +8,7 @@
   :root {
     --font-medieval: 'MedievalSharp', cursive;
     --neon-cyan: #00ffff;
+    --cyan: #00f5ff;
     --neon-orange: #ff7300;
     --bg-deep: #020617;
     --text-primary: #e0f7ff;
@@ -38,18 +39,7 @@
     min-height: 100vh;
   }
 
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background-image: 
-      linear-gradient(rgba(0, 255, 255, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 255, 255, 0.025) 1px, transparent 1px);
-    background-size: 3.5rem 3.5rem;
-    background-position: center;
-    z-index: -2;
-    pointer-events: none;
-  }
+
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-medieval);
@@ -70,9 +60,14 @@
   100% { transform: translateY(100%); }
 }
 
-@keyframes grid-move {
-  0% { transform: translateY(0) rotateX(60deg); }
-  100% { transform: translateY(50px) rotateX(60deg); }
+@keyframes flowCircuit {
+  from { background-position: 0 0; }
+  to { background-position: 0 800px; }
+}
+
+@keyframes circuitPulse {
+  0%, 100% { opacity: 0.4; filter: brightness(1); }
+  50% { opacity: 0.8; filter: brightness(1.4) drop-shadow(0 0 2px var(--cyan)); }
 }
 
 @keyframes float-particle {
@@ -229,56 +224,11 @@
     background: var(--neon-cyan);
   }
 
-  .circuit-bg {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    overflow: hidden;
-  }
 
-  .circuit-line {
-    position: absolute;
-    width: 1px;
-    height: 200px;
-    background: linear-gradient(180deg, transparent, var(--neon-cyan), transparent);
-    opacity: 0;
-    animation: circuit-flow 8s infinite linear;
-  }
 
-  .scanline-overlay {
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      rgba(0, 255, 255, 0.015) 50%,
-      transparent 100%
-    );
-    height: 20%;
-    width: 100%;
-    pointer-events: none;
-    z-index: 100;
-    animation: scanline 10s infinite linear;
-  }
 
-  .tech-grid {
-    position: fixed;
-    bottom: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background-image: 
-      linear-gradient(rgba(0, 255, 255, 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 255, 255, 0.08) 1px, transparent 1px);
-    background-size: 50px 50px;
-    transform-origin: center top;
-    animation: grid-move 2s linear infinite;
-    z-index: -2;
-    pointer-events: none;
-    mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
-    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
-  }
+
+
 
   .particles-container {
     position: fixed;

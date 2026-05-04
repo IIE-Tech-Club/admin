@@ -71,9 +71,14 @@ export function HackathonSettingsPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
+      const idToken = await user?.getIdToken();
+      const headers: HeadersInit = { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      };
       const res = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           title: settings.title,
           tagline: settings.tagline,
@@ -114,8 +119,13 @@ export function HackathonSettingsPage() {
 
     setDeleting(true)
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}?creatorId=${user.uid}`, {
+      const idToken = await user.getIdToken();
+      const headers: HeadersInit = {
+        'Authorization': `Bearer ${idToken}`
+      };
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, {
         method: 'DELETE',
+        headers
       })
       
       if (response.ok) {

@@ -75,10 +75,15 @@ export function RegistrationDetailsPage() {
       const user = auth.currentUser;
       if (!user) throw new Error("Authentication node not found.");
 
+      const idToken = await user.getIdToken();
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${idToken}`
+      };
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/registrations/${registrationId}?creatorId=${user.uid}`,
+        `${import.meta.env.VITE_API_URL}/registrations/${registrationId}`,
         {
           method: "DELETE",
+          headers,
         },
       );
 
