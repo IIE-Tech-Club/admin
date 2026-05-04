@@ -46,7 +46,9 @@ export function RegistrationsPage() {
   const [loading, setLoading] = useState(true)
   const [hackathonData, setHackathonData] = useState<Hackathon | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('All')
+  const [attendanceFilter, setAttendanceFilter] = useState('All')
+  const [foodFilter, setFoodFilter] = useState('All')
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Registration; direction: 'asc' | 'desc' } | null>(null)
   const [showScanner, setShowScanner] = useState(false)
   const [scanMode, setScanMode] = useState<'attendance' | 'food' | null>(null)
   const [showModeSelection, setShowModeSelection] = useState(false)
@@ -174,9 +176,31 @@ export function RegistrationsPage() {
     const matchesSearch =
       item.participant.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.firebaseUid?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'All' || item.status === statusFilter
-    return matchesSearch && matchesStatus
+      (item.firebaseUid?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      item.team.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesAttendance = attendanceFilter === 'All' || 
+      (attendanceFilter === 'Present' ? item.attendance === true : item.attendance === false)
+      
+    const matchesFood = foodFilter === 'All' || 
+      (foodFilter === 'Given' ? item.food === true : item.food === false)
+
+    return matchesSearch && matchesAttendance && matchesFood
+  })
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (!sortConfig) return 0
+    const { key, direction } = sortConfig
+    const aVal = a[key]
+    const bVal = b[key]
+    
+    if (aVal === bVal) return 0
+    if (aVal === undefined || aVal === null) return 1
+    if (bVal === undefined || bVal === null) return -1
+    
+    // Type-safe comparison
+    const result = (aVal as string | boolean) > (bVal as string | boolean) ? 1 : -1
+    return direction === 'asc' ? result : -result
   })
 
   return (
@@ -268,17 +292,25 @@ export function RegistrationsPage() {
             <h2 className="text-base sm:text-xl font-black text-white tracking-wider font-orbitron">Entity Registry</h2>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
-            {/* Status Filter */}
+            {/* Attendance Filter */}
             <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              className="bg-slate-900 border border-cyan-500/20 px-3 py-2 text-[10px] font-orbitron tracking-widest text-cyan-400 focus:border-cyan-400 outline-none"
+              value={attendanceFilter}
+              onChange={e => setAttendanceFilter(e.target.value)}
+              className="bg-slate-900 border border-cyan-500/20 px-3 py-2 text-[10px] font-orbitron tracking-widest text-emerald-400 focus:border-cyan-400 outline-none"
             >
-              <option value="All">ALL STATUS</option>
-              <option value="Pending">PENDING</option>
-              <option value="Approved">APPROVED</option>
-              <option value="Rejected">REJECTED</option>
-              <option value="Done">DONE</option>
+              <option value="All">ALL ATTENDANCE</option>
+              <option value="Present">PRESENT</option>
+              <option value="Absent">ABSENT</option>
+            </select>
+            {/* Food Filter */}
+            <select
+              value={foodFilter}
+              onChange={e => setFoodFilter(e.target.value)}
+              className="bg-slate-900 border border-cyan-500/20 px-3 py-2 text-[10px] font-orbitron tracking-widest text-amber-400 focus:border-cyan-400 outline-none"
+            >
+              <option value="All">ALL FOOD</option>
+              <option value="Given">GIVEN</option>
+              <option value="Not Given">NOT GIVEN</option>
             </select>
             {/* Search */}
             <div className="relative">
@@ -300,29 +332,51 @@ export function RegistrationsPage() {
         <div className="hidden sm:block soft-scrollbar overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse">
             <thead>
-              <tr className="text-left border-b border-white/5">
-                <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">UID</th>
-                <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Participant</th>
-                <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Squad</th>
-                <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Attendance</th>
-                <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Food</th>
+              <tr className="border-b border-cyan-500/10 text-left">
+                <th 
+                  onClick={() => setSortConfig({ key: 'firebaseUid', direction: sortConfig?.key === 'firebaseUid' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                  className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron cursor-pointer hover:text-cyan-400 transition-colors"
+                >
+                  UID {sortConfig?.key === 'firebaseUid' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                </th>
+                <th 
+                  onClick={() => setSortConfig({ key: 'participant', direction: sortConfig?.key === 'participant' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                  className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron cursor-pointer hover:text-cyan-400 transition-colors"
+                >
+                  Entity Name {sortConfig?.key === 'participant' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                </th>
+                <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Squadron</th>
+                <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron">Track</th>
+                <th 
+                  onClick={() => setSortConfig({ key: 'attendance', direction: sortConfig?.key === 'attendance' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                  className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron text-center cursor-pointer hover:text-cyan-400 transition-colors"
+                >
+                  Attendance {sortConfig?.key === 'attendance' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                </th>
+                <th 
+                  onClick={() => setSortConfig({ key: 'food', direction: sortConfig?.key === 'food' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                  className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron text-center cursor-pointer hover:text-cyan-400 transition-colors"
+                >
+                  Food {sortConfig?.key === 'food' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                </th>
+                <th className="pb-3 px-4 pt-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 font-orbitron text-center">Phases</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-cyan-500/5">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="py-10">
+                  <td colSpan={7} className="py-10">
                     <Loader text="Fetching encrypted data..." />
                   </td>
                 </tr>
-              ) : filteredData.length === 0 ? (
+              ) : sortedData.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-slate-600 font-orbitron text-xs uppercase tracking-widest">
+                  <td colSpan={7} className="py-20 text-center text-slate-600 font-orbitron text-xs uppercase tracking-widest">
                     No matching records found
                   </td>
                 </tr>
               ) : (
-                filteredData.map((row) => {
+                sortedData.map((row) => {
                   return (
                     <tr 
                       key={row.firebaseUid}
