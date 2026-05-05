@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
+import { auth, onAuthStateChanged } from '../lib/firebase'
+import type { User } from '../lib/firebase'
 import Loader from '../components/ui/Loader'
 import QRScanner from '../components/QRScanner'
 import { Toaster, toast } from 'sonner'
@@ -53,7 +55,15 @@ export function RegistrationsPage() {
   const [scanMode, setScanMode] = useState<'attendance' | 'food' | null>(null)
   const [showModeSelection, setShowModeSelection] = useState(false)
   const [lastScanned, setLastScanned] = useState<{ id: string; time: number } | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser)
+    })
+    return () => unsubscribe()
+  }, [])
 
   const handleScan = async (decodedText: string) => {
     // Expected URL: https://participant-dashboard.vercel.app/[userUID]/profile
@@ -91,19 +101,38 @@ export function RegistrationsPage() {
 
         // Update backend
         try {
-          fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}/mark/${userUID}`, {
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}/mark/${userUID}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-uid': user?.uid || ''
+            },
             body: JSON.stringify({ type: scanMode })
+          })
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}))
+            throw new Error(errorData.message || 'Server rejected check-in protocol')
+          }
+
+          toast.success(scanMode === 'attendance' ? 'Attendance marked' : 'Food issued', {
+            description: `Entity: ${userExists.participant}`,
+            style: { background: '#0f172a', border: '1px solid rgba(34, 197, 94, 0.3)', color: '#4ade80' }
           })
         } catch (error) {
           console.error(`Failed to update ${scanMode} on server:`, error)
+          // Rollback local state on failure
+          setData(prev => prev.map(reg => {
+            if (reg.firebaseUid === userUID) {
+              return { ...reg, [scanMode!]: false }
+            }
+            return reg
+          }))
+          toast.error(`Sync Failure`, {
+            description: error instanceof Error ? error.message : 'Database link interrupted',
+            style: { background: '#0f172a', border: '1px solid rgba(244, 63, 94, 0.3)', color: '#fb7185' }
+          })
         }
-
-        toast.success(scanMode === 'attendance' ? 'Attendance marked' : 'Food issued', {
-          description: `Entity: ${userExists.participant}`,
-          style: { background: '#0f172a', border: '1px solid rgba(34, 197, 94, 0.3)', color: '#4ade80' }
-        })
       } else {
         setLastScanned({ id: userUID, time: Date.now() })
         toast.error('User not present', {
@@ -117,11 +146,11 @@ export function RegistrationsPage() {
   useEffect(() => {
     const fetchRegistrations = async () => {
       try {
-        const hRes = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`)
+        const hRes = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, { cache: 'no-store' })
         const hackathon = await hRes.json()
         setHackathonData(hackathon)
 
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`)
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`, { cache: 'no-store' })
         const registrations = await response.json()
         const phases = hackathon.phases || []
 
