@@ -47,7 +47,7 @@ export function HackathonSettingsPage() {
   useEffect(() => {
     const fetchHackathon = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`)
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, { cache: 'no-store' })
         const data = await res.json()
         setCreatorId(data.creatorId || null)
         setSettings({

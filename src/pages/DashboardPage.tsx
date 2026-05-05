@@ -111,8 +111,8 @@ export function DashboardPage() {
         const headers: HeadersInit = idToken ? { 'Authorization': `Bearer ${idToken}` } : {};
 
         const [hRes, rRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, { headers }),
-          fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`, { headers })
+          fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, { headers, cache: 'no-store' }),
+          fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`, { headers, cache: 'no-store' })
         ]);
         
         const hData = await hRes.json()

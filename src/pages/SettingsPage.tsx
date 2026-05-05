@@ -269,6 +269,7 @@ export function SettingsPage() {
       try {
         const response = await fetch(
           `${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`,
+          { cache: 'no-store' }
         );
         const data = await response.json();
         setCreatorId(data.creatorId || null);
@@ -445,18 +446,27 @@ export function SettingsPage() {
     }
     setSaving(true);
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-uid": user?.uid || "",
+        },
         body: JSON.stringify({
           phases,
           creatorId: user?.uid,
         }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Server protocol rejection.");
+      }
+
       alert("Phase configuration updated successfully");
     } catch (error) {
       console.error("Failed to update phases:", error);
-      alert("Failed to update phases");
+      alert(`Failed to update phases: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setSaving(false);
     }
