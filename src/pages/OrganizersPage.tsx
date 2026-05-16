@@ -53,14 +53,23 @@ export function OrganizersPage() {
   }, [hackathonId])
 
   const handleSave = async () => {
+    if (!user) {
+      alert('You must be signed in to commit changes.')
+      return
+    }
+
     setSaving(true)
     try {
+      const idToken = await user.getIdToken()
       const res = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           organizers,
-          creatorId: user?.uid,
+          creatorId: user.uid,
         }),
       })
       if (res.ok) {

@@ -2,6 +2,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  redirect,
 } from '@tanstack/react-router'
 import { AdminLayout } from './components/AdminLayout'
 import { DashboardPage } from './pages/DashboardPage'
@@ -16,7 +17,30 @@ import { HackathonSettingsPage } from './pages/HackathonSettingsPage'
 import { OrganizersPage } from './pages/OrganizersPage'
 import { JudgesPage } from './pages/JudgesPage'
 import { SelectHackathonPage } from './pages/SelectHackathonPage'
+import { LandingPage } from './pages/LandingPage'
+import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+
+const isAuthValid = () => {
+  const auth = localStorage.getItem("admin_auth");
+  if (!auth) return false;
+  
+  // Backward compatibility for existing "true" values
+  if (auth === "true") return true; 
+
+  const loginTime = parseInt(auth);
+  if (isNaN(loginTime)) return false;
+
+  const oneDay = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  
+  if (now - loginTime > oneDay) {
+    localStorage.removeItem("admin_auth");
+    return false;
+  }
+  
+  return true;
+};
 
 const rootRoute = createRootRoute({
   notFoundComponent: NotFoundPage,
@@ -25,13 +49,40 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
+  component: LandingPage,
+})
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  component: LoginPage,
+  beforeLoad: () => {
+    if (isAuthValid()) {
+      throw redirect({ to: "/hackathon" });
+    }
+  },
+})
+
+const hackathonRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/hackathon',
   component: SelectHackathonPage,
+  beforeLoad: () => {
+    if (!isAuthValid()) {
+      throw redirect({ to: "/login" });
+    }
+  },
 })
 
 const hackathonParentRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/h/$hackathonId',
   component: AdminLayout,
+  beforeLoad: () => {
+    if (!isAuthValid()) {
+      throw redirect({ to: "/login" });
+    }
+  },
 })
 
 const dashboardRoute = createRoute({
@@ -104,6 +155,8 @@ const judgesRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  loginRoute,
+  hackathonRoute,
   hackathonParentRoute.addChildren([
     dashboardRoute,
     registrationsRoute,

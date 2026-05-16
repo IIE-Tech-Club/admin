@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type SyntheticEvent } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import {
@@ -140,7 +140,7 @@ export function SelectHackathonPage() {
     fetchHackathons();
   }, []);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = async (e: SyntheticEvent) => {
     e.preventDefault();
 
     if (newHackathon.startDate && newHackathon.endDate) {

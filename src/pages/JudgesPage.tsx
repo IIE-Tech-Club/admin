@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "@tanstack/react-router";
 import { auth } from "../lib/firebase";
+import type { User } from "../lib/firebase";
 
 interface Judge {
   email: string;
@@ -16,6 +17,7 @@ interface JudgingParameter {
 
 export function JudgesPage() {
   const { hackathonId } = useParams({ from: "/h/$hackathonId/judges" });
+  const [user, setUser] = useState<User | null>(null);
   const [judges, setJudges] = useState<Judge[]>([]);
   const [parameters, setParameters] = useState<JudgingParameter[]>([]);
   const [newJudgeEmail, setNewJudgeEmail] = useState("");
@@ -24,52 +26,80 @@ export function JudgesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchHackathonData();
-  }, [hackathonId]);
-
-  const fetchHackathonData = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setJudges(data.judges || []);
-        setParameters(data.judgingParameters || []);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const saveHackathonData = async (updatedJudges: Judge[], updatedParams: JudgingParameter[]) => {
-    if (!auth.currentUser) return;
+    if (!user) {
+      alert("You must be signed in to modify judges.");
+      return;
+    }
+    
     setSaving(true);
     try {
+      const idToken = await user.getIdToken();
       const res = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
         body: JSON.stringify({
-          creatorId: auth.currentUser.uid,
+          creatorId: user.uid,
           judges: updatedJudges,
           judgingParameters: updatedParams
         })
       });
+      
       if (res.ok) {
         setJudges(updatedJudges);
         setParameters(updatedParams);
+      } else {
+        const errData = await res.json();
+        alert(`Failed to save: ${errData.message}`);
       }
     } catch (err) {
       console.error(err);
+      alert("An error occurred while saving.");
     } finally {
       setSaving(false);
     }
   };
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setJudges(data.judges || []);
+          setParameters(data.judgingParameters || []);
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [hackathonId]);
+
   const handleAddJudge = () => {
-    if (!newJudgeEmail) return;
-    const updatedJudges = [...judges, { email: newJudgeEmail, status: "invited" }];
+    const email = newJudgeEmail.trim().toLowerCase();
+    if (!email) return;
+
+    if (judges.some(j => j.email.toLowerCase() === email)) {
+      alert("This judge has already been added.");
+      return;
+    }
+
+    const updatedJudges = [...judges, { email, status: "invited" }];
     saveHackathonData(updatedJudges, parameters);
     setNewJudgeEmail("");
   };

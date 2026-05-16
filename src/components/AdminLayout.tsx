@@ -273,7 +273,7 @@ const SidebarContent = ({
 
     <div className="mt-auto border-t border-cyan-500/20 p-4">
       <Link
-        to="/"
+        to="/hackathon"
         className="w-full neon-btn-outline flex items-center justify-center gap-2 !py-2.5"
       >
         <ExitIcon />
@@ -471,7 +471,7 @@ export function AdminLayout() {
           <button onClick={handleLogin} className="w-full neon-btn-cyan">
             INITIALIZE AUTHENTICATION
           </button>
-          <Link to="/" className="block mt-6 text-[10px] text-slate-600 hover:text-white transition-colors uppercase tracking-[0.3em] font-black">
+          <Link to="/hackathon" className="block mt-6 text-[10px] text-slate-600 hover:text-white transition-colors uppercase tracking-[0.3em] font-black">
             Return to Node Selection
           </Link>
         </div>
@@ -517,7 +517,7 @@ export function AdminLayout() {
             >
               SWITCH IDENTITY
             </button>
-            <Link to="/" className="w-full text-[10px] text-slate-500 hover:text-white transition-colors uppercase tracking-[0.3em] font-black py-2">
+            <Link to="/hackathon" className="w-full text-[10px] text-slate-500 hover:text-white transition-colors uppercase tracking-[0.3em] font-black py-2">
               Return to Node Selection
             </Link>
           </div>
