@@ -52,7 +52,7 @@ function SortableField({
   pIdx: number;
   fIdx: number;
   updateField: (pIdx: number, fIdx: number, updates: Partial<PhaseField>) => void;
-  removeField: (pIdx: number, fIdx: number) => void;
+  removeField: (pIdx: number, fieldId: string) => void;
   phase: Phase;
 }) {
   const {
@@ -195,7 +195,8 @@ function SortableField({
               field.id === "repoLink"))
         ) ? (
           <button
-            onClick={() => removeField(pIdx, fIdx)}
+            type="button"
+            onClick={(e) => { e.preventDefault(); removeField(pIdx, field.id); }}
             className="text-rose-400/50 hover:text-rose-400 text-xs font-orbitron transition-colors"
           >
             ✕
@@ -344,6 +345,18 @@ export function SettingsPage() {
                 id: "collegeName",
                 label: "College / University Name",
                 type: "text",
+                required: true,
+              },
+              {
+                id: "github",
+                label: "GitHub Profile URL",
+                type: "url",
+                required: true,
+              },
+              {
+                id: "linkedin",
+                label: "LinkedIn Profile URL",
+                type: "url",
                 required: true,
               },
             ],
@@ -627,13 +640,13 @@ export function SettingsPage() {
     });
   };
 
-  const removeField = (phaseIndex: number, fieldIndex: number) => {
+  const removeField = (phaseIndex: number, fieldId: string) => {
     setPhases((prevPhases) => {
       return prevPhases.map((phase, pIdx) => {
         if (pIdx === phaseIndex) {
           return {
             ...phase,
-            fields: (phase.fields || []).filter((_, i) => i !== fieldIndex),
+            fields: (phase.fields || []).filter((f) => f.id !== fieldId),
           };
         }
         return phase;
