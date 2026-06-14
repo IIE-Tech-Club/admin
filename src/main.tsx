@@ -13,18 +13,15 @@ if (!rootElement) {
 }
 
 // System initialization log
-if (typeof window !== "undefined") {
-  const styles = {
-    header:
-      "background: linear-gradient(135deg, #00f2fe 0%, #4d79ff 100%); color: white; font-weight: bold; padding: 8px 12px; font-size: 14px; border-radius: 4px 4px 0 0; font-family: monospace;",
-    body: "background: #0a0e27; color: #00f2fe; padding: 8px 12px; font-family: monospace; font-size: 12px; border-left: 3px solid #00f2fe; border-right: 3px solid #00f2fe; border-bottom: 3px solid #00f2fe; border-radius: 0 0 4px 4px;",
-  };
-
-  console.log("%c⚡ CODECRAFT PLATFORM INITIALIZED", styles.header);
-  console.log(
-    "%c✓ Engineered by: Ayush Choudhary\n✓ Project Year: 2026\n✓ Platform Status: OPERATIONAL\n✓ GitHub: https://github.com/AR128\n",
-    styles.body,
-  );
+if (typeof window !== "undefined" && !(window as any).__CODECRAFT_LOGGED__) {
+  (window as any).__CODECRAFT_LOGGED__ = true;
+  const headerStyle = "background: linear-gradient(135deg, #00f2fe 0%, #4d79ff 100%); color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px; font-size: 13px;";
+  const itemStyle = "color: #00f2fe; font-weight: bold; padding: 4px 8px; border: 2px solid #00f2fe; border-radius: 4px; margin-top: 4px;";
+  console.log("%c⚡ CODECRAFT PLATFORM INITIALIZED", headerStyle);
+  console.log("%c✓ Engineered by: Ayush Choudhary", itemStyle);
+  console.log("%c✓ Project Year: 2026", itemStyle);
+  console.log("%c✓ Platform Status: OPERATIONAL", itemStyle);
+  console.log("%c✓ GitHub: https://github.com/AR128", itemStyle);
 }
 
 createRoot(rootElement).render(
