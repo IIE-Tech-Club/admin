@@ -24,7 +24,10 @@ interface Hackathon {
 
 interface RegistrationResponse {
   _id: string;
-  responses: Record<string, { teamName?: string; [key: string]: unknown } | undefined>;
+  responses: Record<
+    string,
+    { teamName?: string; [key: string]: unknown } | undefined
+  >;
 }
 
 // ── Nav Icon Components ─────────────────────────────────────────────
@@ -224,7 +227,9 @@ const SidebarContent = ({
           <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-cyan-400/80 font-orbitron">
             CodeCraft
           </p>
-          <p className="text-base font-bold text-white font-orbitron">OS v3.0</p>
+          <p className="text-base font-bold text-white font-orbitron">
+            OS v3.0
+          </p>
         </div>
       </div>
     </div>
@@ -290,7 +295,11 @@ export function AdminLayout() {
   const [loading, setLoading] = useState(true);
   const [authChecking, setAuthChecking] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [stats, setStats] = useState({ registrations: 0, teams: 0, submissions: 0 });
+  const [stats, setStats] = useState({
+    registrations: 0,
+    teams: 0,
+    submissions: 0,
+  });
 
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
@@ -316,11 +325,18 @@ export function AdminLayout() {
     const fetchDashboardStats = async () => {
       try {
         const idToken = await user?.getIdToken();
-        const headers: HeadersInit = idToken ? { 'Authorization': `Bearer ${idToken}` } : {};
+        const headers: HeadersInit = idToken
+          ? { Authorization: `Bearer ${idToken}` }
+          : {};
 
         const [hRes, rRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, { headers }),
-          fetch(`${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/hackathons/${hackathonId}`, {
+            headers,
+          }),
+          fetch(
+            `${import.meta.env.VITE_API_URL}/registrations/${hackathonId}`,
+            { headers },
+          ),
         ]);
 
         if (hRes.ok) {
@@ -433,17 +449,39 @@ export function AdminLayout() {
       : lastPart.charAt(0).toUpperCase() + lastPart.slice(1);
 
   const sectionByPath: Record<string, { title: string; subtitle: string }> = {
-    Dashboard: { title: "Dashboard", subtitle: "Live pulse of the hackathon floor" },
-    Registrations: { title: "Registrations", subtitle: "Participant onboarding and check-in queue" },
+    Dashboard: {
+      title: "Dashboard",
+      subtitle: "Live pulse of the hackathon floor",
+    },
+    Registrations: {
+      title: "Registrations",
+      subtitle: "Participant onboarding and check-in queue",
+    },
     Teams: { title: "Teams", subtitle: "Squad health, progress, and velocity" },
-    Submission: { title: "Submission", subtitle: "Judging pipeline and latest uploads" },
-    Phases: { title: "Phase Architect", subtitle: "Design and configure registration phases" },
-    Organizers: { title: "Organizers", subtitle: "Manage team profiles, roles, and social presence" },
-    Judges: { title: "Judges", subtitle: "Manage hackathon evaluators and scoring parameters" },
-    Settings: { title: "Hackathon Settings", subtitle: "Name, contact email, and identity configuration" },
+    Submission: {
+      title: "Submission",
+      subtitle: "Judging pipeline and latest uploads",
+    },
+    Phases: {
+      title: "Phase Architect",
+      subtitle: "Design and configure registration phases",
+    },
+    Organizers: {
+      title: "Organizers",
+      subtitle: "Manage team profiles, roles, and social presence",
+    },
+    Judges: {
+      title: "Judges",
+      subtitle: "Manage hackathon evaluators and scoring parameters",
+    },
+    Settings: {
+      title: "Hackathon Settings",
+      subtitle: "Name, contact email, and identity configuration",
+    },
   };
 
-  const currentSection = sectionByPath[sectionTitle] ?? sectionByPath["Dashboard"];
+  const currentSection =
+    sectionByPath[sectionTitle] ?? sectionByPath["Dashboard"];
 
   if (loading || authChecking) {
     return (
@@ -458,8 +496,18 @@ export function AdminLayout() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-orbitron">
         <div className="glass-card max-w-md w-full p-8 sm:p-12 text-center border-red-500/20">
           <div className="h-16 w-16 sm:h-20 sm:w-20 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8">
-            <svg className="w-8 h-8 sm:w-10 sm:h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 00-2-2H3" />
+            <svg
+              className="w-8 h-8 sm:w-10 sm:h-10 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 00-2-2H3"
+              />
             </svg>
           </div>
           <h2 className="text-xl sm:text-2xl font-black mb-3 tracking-tighter uppercase">
@@ -471,7 +519,10 @@ export function AdminLayout() {
           <button onClick={handleLogin} className="w-full neon-btn-cyan">
             INITIALIZE AUTHENTICATION
           </button>
-          <Link to="/hackathon" className="block mt-6 text-[10px] text-slate-600 hover:text-white transition-colors uppercase tracking-[0.3em] font-black">
+          <Link
+            to="/hackathon"
+            className="block mt-6 text-[10px] text-slate-600 hover:text-white transition-colors uppercase tracking-[0.3em] font-black"
+          >
             Return to Node Selection
           </Link>
         </div>
@@ -484,40 +535,64 @@ export function AdminLayout() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-orbitron">
         <div className="glass-card max-w-md w-full p-8 sm:p-12 text-center border-red-500/20">
           <div className="h-16 w-16 sm:h-20 sm:w-20 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8">
-            <svg className="w-8 h-8 sm:w-10 sm:h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            <svg
+              className="w-8 h-8 sm:w-10 sm:h-10 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+              />
             </svg>
           </div>
           <h2 className="text-xl sm:text-2xl font-black mb-3 tracking-tighter uppercase">
             Access <span className="text-red-500">Denied</span>
           </h2>
           <p className="text-slate-400 text-xs sm:text-sm mb-6 leading-relaxed uppercase tracking-widest font-bold">
-            This node is protected. Only the designated creator may modify parameters for{" "}
+            This node is protected. Only the designated creator may modify
+            parameters for{" "}
             <span className="text-white">"{hackathon.title}"</span>.
           </p>
-          
+
           <div className="grid gap-4 mb-8">
             <div className="p-4 bg-slate-900/50 border border-white/5 text-left">
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Your Identity (UID)</p>
-              <p className="text-xs text-cyan-400 font-mono font-bold break-all">{user.uid}</p>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-2">Email</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">
+                Your Identity (UID)
+              </p>
+              <p className="text-xs text-cyan-400 font-mono font-bold break-all">
+                {user.uid}
+              </p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-2">
+                Email
+              </p>
               <p className="text-xs text-white/70 truncate">{user.email}</p>
             </div>
-            
+
             <div className="p-4 bg-red-500/5 border border-red-500/20 text-left">
-              <p className="text-[10px] text-red-400/60 uppercase tracking-widest mb-1">Required Creator ID</p>
-              <p className="text-xs text-red-400 font-mono font-bold break-all">{hackathon.creatorId}</p>
+              <p className="text-[10px] text-red-400/60 uppercase tracking-widest mb-1">
+                Required Creator ID
+              </p>
+              <p className="text-xs text-red-400 font-mono font-bold break-all">
+                {hackathon.creatorId}
+              </p>
             </div>
           </div>
 
           <div className="flex flex-col gap-3">
-            <button 
+            <button
               onClick={() => auth.signOut()}
               className="w-full neon-btn-outline block text-center"
             >
               SWITCH IDENTITY
             </button>
-            <Link to="/hackathon" className="w-full text-[10px] text-slate-500 hover:text-white transition-colors uppercase tracking-[0.3em] font-black py-2">
+            <Link
+              to="/hackathon"
+              className="w-full text-[10px] text-slate-500 hover:text-white transition-colors uppercase tracking-[0.3em] font-black py-2"
+            >
               Return to Node Selection
             </Link>
           </div>
@@ -525,7 +600,6 @@ export function AdminLayout() {
       </div>
     );
   }
-
 
   return (
     <div className="min-h-screen bg-transparent text-[#e0f7ff] font-grotesk">
@@ -578,9 +652,13 @@ export function AdminLayout() {
 
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] font-orbitron text-slate-500 flex-wrap">
-                  <span className="font-bold text-cyan-400 shrink-0">ADMIN</span>
+                  <span className="font-bold text-cyan-400 shrink-0">
+                    ADMIN
+                  </span>
                   <span className="text-slate-700 shrink-0">|</span>
-                  <span className="text-white truncate">{currentSection.title}</span>
+                  <span className="text-white truncate">
+                    {currentSection.title}
+                  </span>
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500 font-medium tracking-wide hidden sm:block truncate">
                   {currentSection.subtitle}
@@ -591,7 +669,9 @@ export function AdminLayout() {
               <div className="flex items-center gap-2 shrink-0">
                 <div className="hidden md:flex items-center gap-2 px-3 py-1.5 border border-cyan-500/20 bg-cyan-500/5">
                   <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_rgba(0,255,255,0.8)]" />
-                  <span className="text-[9px] font-bold text-cyan-400 font-orbitron uppercase tracking-widest">Live</span>
+                  <span className="text-[9px] font-bold text-cyan-400 font-orbitron uppercase tracking-widest">
+                    Live
+                  </span>
                 </div>
                 {/* Mobile: show hackathon name */}
                 <div className="flex lg:hidden items-center">
