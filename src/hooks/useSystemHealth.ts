@@ -15,7 +15,7 @@ export const useSystemHealthMonitor = (options = {}) => {
   return useQuery({
     queryKey: ["platform-health"],
     queryFn: async (): Promise<PlatformHealthPayload> => {
-      const response = await fetch(`${HEALTH_ENDPOINT}/api/health`, {
+      const response = await fetch(`${HEALTH_ENDPOINT}/health`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
