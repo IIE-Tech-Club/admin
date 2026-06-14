@@ -1,4 +1,5 @@
-import { ReactNode, useEffect } from "react";
+import { useEffect } from "react";
+import type { ReactNode } from "react";
 import {
   useSystemHealthMonitor,
   validateSystemIntegrity,
@@ -11,7 +12,7 @@ interface SystemHealthProviderProps {
 export const SystemHealthProvider = ({
   children,
 }: SystemHealthProviderProps) => {
-  const { data: healthData, isLoading, error } = useSystemHealthMonitor();
+  const { data: healthData, isLoading } = useSystemHealthMonitor();
 
   useEffect(() => {
     const isValid = validateSystemIntegrity(healthData);
